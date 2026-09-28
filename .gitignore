@@ -1,0 +1,16 @@
+# 별도 저장소 (각 폴더 안에서 git 사용, submodule 아님)
+/ProjectWarrior/
+/PW01WebServer/
+
+# Claude Code: 공유 설정만 커밋, 나머지는 개인
+.claude/*
+!.claude/settings.json
+CLAUDE.local.md
+
+# 개인 문서
+/docs_local/
+
+# 환경 설정·비밀값 (동기화하지 않음, 값 비운 예시만 커밋)
+.env
+.env.*
+!.env.example

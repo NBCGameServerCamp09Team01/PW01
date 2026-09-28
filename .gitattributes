@@ -1,0 +1,6 @@
+* text=auto
+
+# Root 저장소 전용: Windows 배치 파일은 항상 CRLF로 체크아웃
+# (LF로 받으면 cmd에서 오동작할 수 있음. ProjectWarrior·PW01WebServer에는 영향 없음)
+*.bat text eol=crlf
+*.cmd text eol=crlf
