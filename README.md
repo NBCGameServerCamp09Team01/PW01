@@ -10,7 +10,7 @@ PW01/                          ← Root 저장소 (PW01)
 ├─ README.md                   ← 이 파일
 ├─ AGENTS.md                   ← AI 에이전트 공통 규칙
 ├─ CLAUDE.md                   ← @AGENTS.md (Claude Code용 import)
-├─ .mcp.json                   ← MCP 서버 설정 (지금은 빈 틀, Unreal MCP 추후 작성)
+├─ .mcp.json                   ← MCP 서버 설정 (Unreal 에디터 내장 MCP 서버)
 ├─ .claude/settings.json       ← Claude Code 공유 설정 (나머지 .claude/ 는 개인, 무시)
 ├─ CLAUDE.local.md             ← 개인 메모 (커밋 안 됨)
 ├─ docs/                       ← 팀 공통 문서
@@ -42,7 +42,10 @@ Root는 `ProjectWarrior/`, `PW01WebServer/` 를 `.gitignore`로 무시합니다.
 
 ## MCP 설정 (`.mcp.json`)
 
-지금은 빈 틀(`"mcpServers": {}`)입니다. Unreal MCP 설정은 ProjectWarrior 쪽 기본값이 정해지면 그 값을 따라 여기에 채웁니다. 루트에서 `claude` 를 실행하면 이 파일이 쓰입니다. 접속 키 같은 비밀값은 이 파일에 적지 않고 환경변수로 넘깁니다.
+UE 5.8 내장 `ModelContextProtocol` 플러그인의 서버(`unreal-mcp`, `http://127.0.0.1:8000/mcp`)에 연결합니다. `ProjectWarrior/.mcp.json` 과 같은 값이며, 에디터 설정(포트 8000, 경로 `/mcp`)을 바꾸면 두 파일을 함께 고칩니다. 루트에서 `claude` 를 실행하면 이 파일이 쓰입니다.
+
+- Unreal 에디터가 켜져 있고 MCP 서버가 떠 있어야 연결됩니다. 안 뜨면 에디터 콘솔에서 `ModelContextProtocol.StartServer` 를 실행합니다.
+- 처음 실행할 때 Claude Code가 이 서버를 쓸지 묻습니다. 승인하면 됩니다. 접속 키 같은 비밀값은 이 파일에 적지 않고 환경변수로 넘깁니다.
 
 ## 가장 중요한 규칙: git은 각 폴더 안에서
 
