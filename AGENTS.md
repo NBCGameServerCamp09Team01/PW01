@@ -19,7 +19,7 @@
 
 - git 명령은 **대상 파일이 속한 저장소 폴더 안에서만** 실행합니다. 실행 전에 `git rev-parse --show-toplevel`로 어느 저장소인지 확인합니다.
 - Root에서 `ProjectWarrior/`, `PW01WebServer/` 파일을 add·commit 하지 않습니다. `git add -f`로 무시 규칙을 우회하지 않습니다.
-- `main`에 force push 하지 않습니다. `main`에 직접 커밋하지 않고, 브랜치 → Pull Request → 리뷰 후 병합합니다. 브랜치·커밋 규칙은 `docs/git-workflow.md`를 따릅니다.
+- `main`·`dev`에 force push 하지 않습니다. 기준 브랜치(Root `main`, 게임·웹서버 `dev`)에 직접 커밋하지 않고, 브랜치 → Pull Request → 리뷰 후 병합합니다. 브랜치·커밋 규칙은 `docs/git-workflow.md`를 따릅니다.
 - 사용자가 요청하지 않은 commit·push는 하지 않습니다.
 - 히스토리를 바꾸는 명령(`reset --hard`, `rebase`, `push --force`, `clean -fd`)은 사용자 확인 후에만 실행합니다.
 
