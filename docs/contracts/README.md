@@ -4,12 +4,58 @@
 
 | 명세 | 현재 버전 | 상태 | 게임 담당 | 웹서버 담당 |
 |---|---|---|---|---|
-| [result-api.md](result-api.md) | v0 | 작성 전 | TBD | TBD |
-| [ds-registry-api.md](ds-registry-api.md) | v0 | 작성 전 | TBD | TBD |
-| [redis-keys.md](redis-keys.md) | v0 | 작성 전 | — | TBD |
+| [result-api.md](result-api.md) | v0 | 작성 전 | Juunnmmoo | Robbie |
+| [redis-keys.md](redis-keys.md) | v0 | 작성 전 | — | Sang-Hyun-Kim |
+| [example-api.md](example-api.md) | v1 | 초안 | — | Sang-Hyun-Kim (리뷰: Robbie) |
 
 - 상태: `작성 전` → `초안` → `합의` → `구현됨`
 - 요청·응답 JSON 예시는 [examples/](examples/) 에 둡니다.
+- `example-api.md`는 학습용 예시입니다. 첫 실제 API(S1)가 병합되면 웹서버 예시 코드와 함께 지웁니다.
+
+## 공통 규칙
+
+> 상태: 초안. 모든 API에 적용합니다. 바꿀 때는 이 절을 먼저 고치고 게임·웹서버 담당 모두에게 리뷰를 받습니다.
+
+| 항목 | 규칙 |
+|---|---|
+| 경로 | `/api/v1/…`. 호환되지 않게 바뀌면 버전을 올립니다(`/api/v2/…`) |
+| 시각 | UTC. JSON에서는 `Z`가 붙은 ISO-8601 문자열이고, 초 아래는 밀리초까지 씁니다. 예: `"2026-10-05T03:00:00.123Z"` |
+| 오류 | HTTP 상태 코드와 함께 아래 [오류 응답](#오류-응답) 본문을 보냅니다 |
+| 모르는 필드 | 서버는 **요청**에 모르는 필드가 있으면 400(`INVALID_REQUEST_BODY`)으로 거절합니다. 게임은 **응답**에 모르는 필드가 있으면 무시합니다 |
+| 필드 추가 | 응답 필드 추가는 호환되는 변경입니다(`v1` → `v1.1`). 요청 필드를 추가할 때는 서버를 먼저 배포합니다 |
+
+### 오류 응답
+
+```json
+{
+  "code": "VALIDATION_FAILED",
+  "message": "요청 값이 올바르지 않습니다.",
+  "path": "/api/v1/examples",
+  "errors": [
+    { "field": "name", "message": "이름을 입력해야 합니다." }
+  ]
+}
+```
+
+| 필드 | 설명 |
+|---|---|
+| `code` | 기계가 읽는 오류 코드(대문자와 `_`). 게임은 이 값으로 화면 문구를 고릅니다 |
+| `message` | 사람이 읽는 설명 |
+| `path` | 요청 경로 |
+| `errors` | 검증 오류(`VALIDATION_FAILED`)일 때만 붙습니다. 필드별 오류 전부 |
+
+### 오류 코드
+
+| 코드 | HTTP | 상황 |
+|---|---|---|
+| `VALIDATION_FAILED` | 400 | 요청 값(본문 필드, 경로·쿼리 값) 검증 실패 |
+| `INVALID_REQUEST_BODY` | 400 | JSON을 읽을 수 없음, 모르는 필드, 타입이 맞지 않음 |
+| `NOT_FOUND` | 404 | 없는 경로 |
+| `METHOD_NOT_ALLOWED` | 405 | 허용되지 않은 HTTP 메서드 |
+| `INTERNAL_ERROR` | 500 | 서버 내부 오류. 원인은 서버 로그에만 남깁니다 |
+
+- 위 표에 없는 HTTP 오류는 상태 이름을 코드로 씁니다(예: 415 → `UNSUPPORTED_MEDIA_TYPE`).
+- 기능별 오류 코드(예: `EXAMPLE_NOT_FOUND`)는 각 명세의 "오류" 표에 적습니다.
 
 ## 변경 절차
 

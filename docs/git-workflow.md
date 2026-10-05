@@ -1,6 +1,18 @@
 # Git 작업 규칙
 
-세 저장소(PW01, ProjectWarrior, PW01WebServer) 모두 같은 규칙을 씁니다. **git 명령은 항상 해당 저장소 폴더 안에서** 실행합니다.
+세 저장소(PW01, ProjectWarrior, PW01WebServer)는 브랜치 이름·커밋 메시지 규칙을 같이 쓰고, **기준 브랜치만 다릅니다**. **git 명령은 항상 해당 저장소 폴더 안에서** 실행합니다.
+
+## 기준 브랜치
+
+작업 브랜치는 기준 브랜치에서 만들고, Pull Request도 기준 브랜치로 보냅니다.
+
+| 저장소 | 기준 브랜치 | 설명 |
+|---|---|---|
+| PW01 (Root) | `main` | 공통 규칙·문서 저장소. 작업 브랜치 → PR → `main` |
+| ProjectWarrior | `dev` | `dev`에 모으고 `main`은 릴리스용. GitHub 기본 브랜치는 `main` (코드 소유 팀원 관리) |
+| PW01WebServer | `dev` | `dev`에 모으고 `main`은 릴리스용. GitHub 기본 브랜치도 `dev` |
+
+- `dev` → `main` 병합(릴리스)도 Pull Request로 합니다.
 
 ## 작업 순서: pull → 작업 → push
 
@@ -8,8 +20,8 @@
 :: 0. 작업할 저장소 폴더로 이동
 cd PW01\PW01WebServer
 
-:: 1. 최신 받기
-git switch main
+:: 1. 기준 브랜치 최신 받기 (Root는 main, 게임·웹서버는 dev)
+git switch dev
 git pull --ff-only
 
 :: 2. 브랜치 만들기
@@ -22,22 +34,22 @@ git commit -m "feat: 로그인 API 추가"
 :: 4. push
 git push -u origin feat/login-api
 
-:: 5. GitHub에서 Pull Request 생성 → 리뷰 → 병합
+:: 5. GitHub에서 Pull Request 생성(base: 기준 브랜치) → 리뷰 → 병합
 ```
 
-- 세 저장소를 한 번에 최신으로 받으려면 루트에서 `tools\pull-all.bat` 를 실행합니다.
+- 세 저장소를 한 번에 최신으로 받으려면 루트에서 `tools\pull-all.bat` 를 실행합니다. 각 저장소에서 지금 체크아웃된 브랜치를 받습니다.
 - 작업 시작 전과 PR 올리기 전에 한 번씩 pull 합니다. 오래 묵힌 브랜치일수록 충돌이 커집니다.
-- `main`에는 직접 커밋·push 하지 않습니다. force push는 금지입니다.
+- 기준 브랜치(`main`, `dev`)에는 직접 커밋·push 하지 않습니다. force push는 금지입니다.
 
 ## 브랜치 이름
 
 | 접두어 | 용도 | 예 |
 |---|---|---|
-| `feat/` | 새 기능 (코드) | `feat/ds-register` |
+| `feat/` | 새 기능 (코드) | `feat/result-api` |
 | `fix/` | 버그 수정 | `fix/result-null-check` |
 | `content/` | 맵·에셋·데이터 등 콘텐츠 작업 | `content/map-forest-lighting` |
 
-- 소문자와 `-`만 씁니다. 이슈 번호가 있으면 앞에 붙입니다: `feat/12-ds-register`
+- 소문자와 `-`만 씁니다. 이슈 번호가 있으면 앞에 붙입니다: `feat/12-result-api`
 - 문서만 고칠 때는 `docs/` 접두어도 씁니다: `docs/result-api-v1`
 
 ## 커밋 메시지
@@ -50,7 +62,7 @@ git push -u origin feat/login-api
 
 - type: `feat`, `fix`, `content`, `docs`, `refactor`, `test`, `chore`
 - 요약은 한국어로 50자 안쪽, 마침표 없이 씁니다.
-- 예: `fix: DS 재등록 시 중복 키 생성 문제 수정`
+- 예: `fix: 결과 재전송 시 중복 반영 문제 수정`
 - 한 커밋에는 한 가지 목적만 담습니다.
 
 ## Git LFS 주의사항 (ProjectWarrior)
@@ -71,5 +83,6 @@ git push -u origin feat/login-api
 ## Pull Request
 
 - 제목은 커밋 메시지 형식을 따릅니다.
+- base는 그 저장소의 기준 브랜치입니다(위 "기준 브랜치" 표).
 - 본문에 무엇을 바꿨는지, 어떻게 확인했는지 적습니다. 콘텐츠 PR은 수정한 맵·에셋 목록을 적습니다.
 - `docs/contracts/` 명세를 바꾸는 PR은 게임·웹서버 담당자 모두에게 리뷰를 요청합니다.

@@ -65,8 +65,8 @@ PW01\PW01WebServer\   → 웹서버 파일은 여기서 git
 1. GitHub에 저장소 3개 생성 — 완료
 2. Root·웹서버 초기 파일 push — 1회만 (명령은 소유자가 따로 보관)
 3. `tools\setup.bat game` 으로 ProjectWarrior를 빈 저장소로 clone 해 두고, 코드가 올라오면 `tools\pull-all.bat`
-4. 세 저장소 모두 `main` 브랜치 보호 설정
-   Settings → Branches(또는 Rules) → `main`: Pull Request 필수, force push 금지, 삭제 금지
+4. 브랜치 보호 설정은 팀 공유 뒤 정합니다. 대상은 세 저장소의 `main`과 게임·웹서버의 `dev`입니다(기준 브랜치: `docs/git-workflow.md`)
+   Settings → Branches(또는 Rules). 정하기 전까지 AI 에이전트는 각 저장소 `AGENTS.md`의 git 규칙(PR로만 병합, force push 금지)을 따릅니다
 5. 팀원 초대와 저장소 권한 부여
 6. Git LFS 사용량 확인: Organization Settings → Billing (게임 저장소가 커서 한도를 넘을 수 있음)
 

@@ -8,7 +8,7 @@
 | [git-workflow.md](git-workflow.md) | 팀 규칙: 브랜치·커밋·LFS·맵 담당·작업 순서 | 확정 |
 | [contracts/README.md](contracts/README.md) | 게임 ↔ 웹서버 명세 목록과 현재 버전 | 초안 |
 | [contracts/result-api.md](contracts/result-api.md) | 결과 API | 작성 전 |
-| [contracts/ds-registry-api.md](contracts/ds-registry-api.md) | DS 등록 API | 작성 전 |
+| [contracts/example-api.md](contracts/example-api.md) | 학습용 예시 API (예시 코드와 함께 삭제 예정) | 초안 |
 | [contracts/redis-keys.md](contracts/redis-keys.md) | Redis 키 규칙 | 작성 전 |
 | [contracts/examples/](contracts/examples/) | 요청·응답 JSON 예시 | 작성 전 |
 | 일정 | 마일스톤·마감 | 자리만 (추후 추가) |
