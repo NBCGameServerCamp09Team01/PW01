@@ -43,3 +43,23 @@
 ## 6. 개인 파일
 
 - `CLAUDE.local.md`, `docs_local/`, `.claude/`(`settings.json` 제외)는 개인용이며 커밋되지 않습니다. 팀이 공유할 규칙은 이 파일이나 `docs/`에 적습니다.
+
+## 7. 구조 참고 문서 (색인)
+
+작업을 시작하기 전에 해당 영역의 문서를 먼저 읽습니다. 내용은 각 문서에 있고, 여기에는 위치와 요약만 둡니다.
+
+| 영역 | 위치 | 요약 |
+|---|---|---|
+| 작업 공간 전체 | `docs/overview.md` | 구성 요소(게임 클라이언트·웹서버·MySQL·Redis)와 요청 흐름 |
+| Git 규칙 | `docs/git-workflow.md` | 저장소별 기준 브랜치(Root `main`, 게임·웹서버 `dev`), 브랜치 이름, 커밋·PR 형식 |
+| 게임 ↔ 웹서버 약속 | `docs/contracts/README.md` | 명세 목록, 공통 API 규칙(경로 `/api/v1`, 시각 UTC, 오류 응답 형식, 모르는 필드), 변경 절차 |
+| 웹서버 작업 규칙 | `PW01WebServer/AGENTS.md` | 웹서버 폴더 작업에서 이 파일보다 우선. 3계층·DTO·오류·테스트·Git(AI) 규칙 |
+| 웹서버 처음 받기 | `PW01WebServer/README.md` | 준비물, 받기, `.env`, compose, 실행 구성, 빌드 |
+| 웹서버 세팅 명세 | `PW01WebServer/docs/initial-setup.md` | 파일·의존성·설정 키·기동 순서·오류 흐름·테스트·CI 각각의 역할 |
+| 웹서버 구조 요약 | `PW01WebServer/docs/overview.md` | 패키지, 프로필, 환경 변수 표 |
+| 웹서버 새 API 견본 | `PW01WebServer/docs/guides/example-api.md` | Controller → Service → Repository → DB를 따라가기, 파트별 따라 하기 |
+| 웹서버 결정·문제 기록 | `PW01WebServer/docs/decisions/`, `PW01WebServer/docs/troubleshooting/` | 초기 설정 결정(W01~W39)과 근거, 겪은 문제와 해결 |
+| 게임(UE) | `ProjectWarrior/` | 구조 문서 없음(담당자가 채움). 그 폴더에 `AGENTS.md`·`CLAUDE.md`가 생기면 그것을 따름 |
+
+- 웹서버 문서는 PW01WebServer의 `dev` 브랜치 기준입니다.
+- 문서를 새로 만들거나 옮기면 이 표도 함께 고칩니다.
