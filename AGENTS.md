@@ -52,7 +52,7 @@
 |---|---|---|
 | 작업 공간 전체 | `docs/overview.md` | 구성 요소(게임 클라이언트·웹서버·MySQL·Redis)와 요청 흐름 |
 | Git 규칙 | `docs/git-workflow.md` | 저장소별 기준 브랜치(Root `main`, 게임·웹서버 `dev`), 브랜치 이름, 커밋·PR 형식 |
-| 게임 ↔ 웹서버 약속 | `docs/contracts/README.md` | 명세 목록, 공통 API 규칙(경로 `/api/v1`, 시각 UTC, 오류 응답 형식, 모르는 필드), 변경 절차 |
+| 게임 ↔ 웹서버 약속 | `docs/contracts/README.md` | 명세 목록, 공통 API 규칙(경로는 기능 이름부터·버전 없음, 시각 UTC, 오류 응답 형식, 모르는 필드), 변경 절차 |
 | 웹서버 작업 규칙 | `PW01WebServer/AGENTS.md` | 웹서버 폴더 작업에서 이 파일보다 우선. 3계층·DTO·오류·테스트·Git(AI) 규칙 |
 | 웹서버 처음 받기 | `PW01WebServer/README.md` | 준비물, 받기, `.env`, compose, 실행 구성, 빌드 |
 | 웹서버 세팅 명세 | `PW01WebServer/docs/initial-setup.md` | 파일·의존성·설정 키·기동 순서·오류 흐름·테스트·CI 각각의 역할 |
