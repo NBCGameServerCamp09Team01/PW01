@@ -5,7 +5,7 @@
 | 명세 | 현재 버전 | 상태 | 게임 담당 | 웹서버 담당 |
 |---|---|---|---|---|
 | [result-api.md](result-api.md) | v0 | 작성 전 | Juunnmmoo | Robbie |
-| [redis-keys.md](redis-keys.md) | v1 | 합의 | — | Sang-Hyun-Kim (리뷰: Robbie) |
+| [redis-keys.md](redis-keys.md) | v1.1 | 합의 | — | Sang-Hyun-Kim (리뷰: Robbie) |
 | [example-api.md](example-api.md) | v1 | 초안 | — | Sang-Hyun-Kim (리뷰: Robbie) |
 
 - 상태: `작성 전` → `초안` → `합의` → `구현됨`
