@@ -1,0 +1,14 @@
+{
+  "data": {
+    "accountId": "1",
+    "version": 0,
+    "accountLevel": 1,
+    "experience": 0,
+    "statPoints": 0,
+    "investedStats": {},
+    "unlockedSkills": []
+  },
+  "meta": {
+    "requestId": "0b6f3c1e-8a2d-4c6e-9f10-2a7b5d9e1c34"
+  }
+}

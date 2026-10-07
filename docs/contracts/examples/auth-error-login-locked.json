@@ -1,0 +1,7 @@
+{
+  "code": "AUTH_LOGIN_LOCKED",
+  "message": "로그인 시도가 너무 많습니다. 잠시 뒤 다시 시도해 주세요.",
+  "path": "/auth/login",
+  "retryable": false,
+  "retryAfterSeconds": 60
+}
