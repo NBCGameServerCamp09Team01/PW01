@@ -1,0 +1,21 @@
+{
+  "data": {
+    "clearedCount": 0,
+    "totalCount": 2,
+    "stages": [
+      {
+        "stageId": "stage.01.01",
+        "status": "OPEN",
+        "firstClearedAt": null
+      },
+      {
+        "stageId": "stage.01.02",
+        "status": "LOCKED",
+        "firstClearedAt": null
+      }
+    ]
+  },
+  "meta": {
+    "requestId": "0b6f3c1e-8a2d-4c6e-9f10-2a7b5d9e1c34"
+  }
+}
