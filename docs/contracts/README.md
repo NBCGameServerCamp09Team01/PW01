@@ -8,6 +8,7 @@
 | [account-api.md](account-api.md) | v1 | 초안 | Juunnmmoo | Robbie (리뷰: Sang-Hyun-Kim) |
 | [result-api.md](result-api.md) | v0 | 작성 전 | Juunnmmoo | Robbie |
 | [stage-api.md](stage-api.md) | v1 | 초안 | Sang-Hyun-Kim | Sang-Hyun-Kim (리뷰: Robbie) |
+| [realtime-api.md](realtime-api.md) | v1 | 초안 | Juunnmmoo | Juunnmmoo (리뷰: Sang-Hyun-Kim 배정) |
 | [redis-keys.md](redis-keys.md) | v1.1 | 합의 | — | Sang-Hyun-Kim (리뷰: Robbie) |
 | [example-api.md](example-api.md) | v1 | 초안 | — | Sang-Hyun-Kim (리뷰: Robbie) |
 

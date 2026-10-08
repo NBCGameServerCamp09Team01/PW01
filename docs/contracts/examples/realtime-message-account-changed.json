@@ -1,0 +1,8 @@
+{
+  "type": "ACCOUNT_CHANGED",
+  "id": "9d4c2b1a-7e6f-4a5b-8c9d-1e2f3a4b5c6d",
+  "sentAt": "2026-10-08T05:10:00.456Z",
+  "data": {
+    "version": 3
+  }
+}
