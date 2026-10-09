@@ -1,0 +1,12 @@
+{
+  "code": "RESULT_INVALID",
+  "message": "결과를 확인할 수 없습니다.",
+  "path": "/accounts/me/stage-plays/3f2b8c1e-7a4d-4e2f-9b10-6c5d4e3f2a1b/result",
+  "retryable": false,
+  "errors": [
+    {
+      "field": "reachedWave",
+      "message": "클리어면 도달 웨이브가 플레이의 웨이브 수(5)와 같아야 합니다."
+    }
+  ]
+}

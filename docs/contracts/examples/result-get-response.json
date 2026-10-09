@@ -1,0 +1,23 @@
+{
+  "data": {
+    "stagePlayId": "3f2b8c1e-7a4d-4e2f-9b10-6c5d4e3f2a1b",
+    "stageId": "stage.01.01",
+    "difficulty": 0,
+    "cleared": true,
+    "reachedWave": 5,
+    "waveCount": 5,
+    "playTimeSeconds": 412.537,
+    "earnedGold": 820,
+    "killCount": 64,
+    "submittedAt": "2026-10-09T03:07:12.345Z",
+    "reward": {
+      "expGained": 300,
+      "levelBefore": 1,
+      "levelAfter": 3,
+      "statPointsGained": 4
+    }
+  },
+  "meta": {
+    "requestId": "9d1a7e52-3c48-4f0b-8e26-5b7c1d0a4f93"
+  }
+}
