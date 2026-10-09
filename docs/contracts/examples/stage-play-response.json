@@ -1,0 +1,17 @@
+{
+  "data": {
+    "stagePlayId": "3f2b8c1e-7a4d-4e2f-9b10-6c5d4e3f2a1b",
+    "accountId": "1",
+    "stageId": "stage.01.01",
+    "difficulty": 0,
+    "waveCount": 5,
+    "status": "IN_PROGRESS",
+    "endReason": null,
+    "startedAt": "2026-10-09T03:00:00.123Z",
+    "expiresAt": "2026-10-10T03:00:00.123Z",
+    "endedAt": null
+  },
+  "meta": {
+    "requestId": "0b6f3c1e-8a2d-4c6e-9f10-2a7b5d9e1c34"
+  }
+}
