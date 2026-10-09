@@ -1,6 +1,6 @@
 {
   "code": "STAGE_LOCKED",
   "message": "아직 열리지 않은 스테이지입니다.",
-  "path": "/runs",
+  "path": "/accounts/me/stage-plays",
   "retryable": false
 }

@@ -1,0 +1,6 @@
+{
+  "code": "STAGE_PLAY_IN_PROGRESS",
+  "message": "진행 중인 스테이지 플레이가 있습니다.",
+  "path": "/accounts/me/stage-plays",
+  "retryable": false
+}
