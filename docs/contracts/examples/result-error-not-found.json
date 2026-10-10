@@ -1,0 +1,6 @@
+{
+  "code": "STAGE_RESULT_NOT_FOUND",
+  "message": "이 스테이지 플레이의 결과가 없습니다.",
+  "path": "/accounts/me/stage-plays/3f2b8c1e-7a4d-4e2f-9b10-6c5d4e3f2a1b/result",
+  "retryable": false
+}
