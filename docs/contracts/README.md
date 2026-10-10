@@ -11,11 +11,9 @@
 | [stage-play-api.md](stage-play-api.md) | v1 | 초안 | Robbie | Sang-Hyun-Kim (리뷰: Robbie) |
 | [realtime-api.md](realtime-api.md) | v1 | 초안 | Juunnmmoo | Juunnmmoo (리뷰: Sang-Hyun-Kim 배정) |
 | [redis-keys.md](redis-keys.md) | v1.1 | 합의 | — | Sang-Hyun-Kim (리뷰: Robbie) |
-| [example-api.md](example-api.md) | v1 | 초안 | — | Sang-Hyun-Kim (리뷰: Robbie) |
 
 - 상태: `작성 전` → `초안` → `합의` → `구현됨`
 - 요청·응답 JSON 예시는 [examples/](examples/) 에 둡니다.
-- `example-api.md`는 학습용 예시입니다. 첫 실제 API(S1)가 병합되면 웹서버 예시 코드와 함께 지웁니다. 예시는 옛 경로(`/api/v1/examples`)를 그대로 씁니다(아래 경로 규칙보다 먼저 만들어짐).
 
 ## 공통 규칙
 
@@ -46,7 +44,6 @@
 | `data` | 그 API의 결과. 모양은 각 명세에 적습니다 |
 | `meta.requestId` | 요청 번호. 응답 헤더 `X-Request-Id`와 같습니다. 지금은 서버가 만듭니다. 상태를 바꾸는 요청에 게임이 본문 `requestId`(중복 방지 키)를 보내게 되면(S2부터) 그 값을 그대로 씁니다 |
 
-- 학습용 예시 API(`/api/v1/examples`)는 이 규칙보다 먼저 만들어 `data`로 감싸지 않습니다. S1 병합 때 지웁니다.
 
 ### 오류 응답
 
@@ -54,15 +51,14 @@
 {
   "code": "VALIDATION_FAILED",
   "message": "요청 값이 올바르지 않습니다.",
-  "path": "/api/v1/examples",
+  "path": "/auth/signup",
   "retryable": false,
   "errors": [
-    { "field": "name", "message": "이름을 입력해야 합니다." }
+    { "field": "loginId", "message": "아이디는 영문·숫자 4~20자여야 합니다." }
   ]
 }
 ```
 
-- 위 예시의 `path`는 학습용 예시 API의 옛 경로입니다.
 
 | 필드 | 설명 |
 |---|---|
@@ -85,7 +81,7 @@
 | `SERVICE_UNAVAILABLE` | 503 | MySQL·Redis에 닿지 못함. 잠시 뒤 다시 보내면 될 수 있습니다 |
 
 - 위 표에 없는 HTTP 오류는 상태 이름을 코드로 씁니다(예: 415 → `UNSUPPORTED_MEDIA_TYPE`).
-- 기능별 오류 코드(예: `EXAMPLE_NOT_FOUND`)는 각 명세의 "오류" 표에 적습니다.
+- 기능별 오류 코드(예: `ACCOUNT_LOGIN_ID_DUPLICATED`)는 각 명세의 "오류" 표에 적습니다.
 
 ## 변경 절차
 

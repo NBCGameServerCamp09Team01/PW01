@@ -57,7 +57,7 @@
 | 웹서버 처음 받기 | `PW01WebServer/README.md` | 준비물, 받기, `.env`, compose, 실행 구성, 빌드 |
 | 웹서버 세팅 명세 | `PW01WebServer/docs/initial-setup.md` | 파일·의존성·설정 키·기동 순서·오류 흐름·테스트·CI 각각의 역할 |
 | 웹서버 구조 요약 | `PW01WebServer/docs/overview.md` | 패키지, 프로필, 환경 변수 표 |
-| 웹서버 새 API 견본 | `PW01WebServer/docs/guides/example-api.md` | Controller → Service → Repository → DB를 따라가기, 파트별 따라 하기 |
+| 웹서버 새 API 견본 | `PW01WebServer/src/main/java/com/pw01/webserver/auth/`·`account/`, 명세 `docs/contracts/auth-api.md`·`account-api.md` | S1 인증·계정 API로 명세 → Controller → Service → Repository → DB 따라가기(학습용 예시는 10/8 삭제) |
 | 웹서버 결정·문제 기록 | `PW01WebServer/docs/decisions/`, `PW01WebServer/docs/troubleshooting/` | 초기 설정 결정(W01~W39)과 근거, 겪은 문제와 해결 |
 | 게임(UE) | `ProjectWarrior/` | 구조 문서 없음(담당자가 채움). 그 폴더에 `AGENTS.md`·`CLAUDE.md`가 생기면 그것을 따름 |
 
