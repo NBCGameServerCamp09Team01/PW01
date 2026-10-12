@@ -137,7 +137,7 @@ R1의 `data.result`와 R2의 `data`가 같은 모양입니다.
 |---|---|
 | 같은 플레이에 다시 보냄(같은 `requestId`든 다른 `requestId`든) | 200 + 처음 결과 + `ALREADY_SAVED` + 지금 계정 값. 두 번째 내용은 쓰지 않습니다(검사도 하지 않음) |
 | 같은 플레이의 결과가 **동시에** 둘 | 하나는 `SAVED`, 다른 하나는 `ALREADY_SAVED`. 뒤 요청은 기본 키 충돌로 되돌아간 뒤 다시 해서 처음 결과를 받습니다 |
-| 같은 계정의 다른 저장과 부딪힘(계정 값 `version`) | 서버가 새 트랜잭션으로 몇 번 다시 합니다(설정 `pw01.stage-play.save-attempts`, 처음 3). 넘으면 409 `VERSION_CONFLICT`(`retryable: true`) |
+| 같은 계정의 다른 저장과 부딪힘(계정 값 `version`) | 서버가 새 트랜잭션으로 몇 번 다시 합니다(설정 `pw01.progress.save-attempts`, 처음 3. 진행 행을 바꾸는 저장이 같이 씀). 넘으면 409 `VERSION_CONFLICT`(`retryable: true`) |
 
 게임의 재전송(지금)
 
