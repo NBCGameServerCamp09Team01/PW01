@@ -5,8 +5,9 @@
 | 명세 | 현재 버전 | 상태 | 게임 담당 | 웹서버 담당 |
 |---|---|---|---|---|
 | [auth-api.md](auth-api.md) | v1.1 | 초안 | Juunnmmoo | Robbie (리뷰: Sang-Hyun-Kim) |
-| [account-api.md](account-api.md) | v1.1 | 초안 | Juunnmmoo | Robbie (리뷰: Sang-Hyun-Kim) |
+| [account-api.md](account-api.md) | v1.2 | 초안 | Juunnmmoo | Robbie (리뷰: Sang-Hyun-Kim) |
 | [stat-api.md](stat-api.md) | v1 | 구현됨 | Robbie | Robbie (리뷰: Sang-Hyun-Kim) |
+| [skill-api.md](skill-api.md) | v1 | 초안 | Robbie | Robbie (리뷰: Sang-Hyun-Kim) |
 | [result-api.md](result-api.md) | v1 | 초안 | Robbie | Robbie (리뷰: Sang-Hyun-Kim) |
 | [stage-api.md](stage-api.md) | v1.2 | 초안 | Sang-Hyun-Kim | Sang-Hyun-Kim (리뷰: Robbie) |
 | [stage-play-api.md](stage-play-api.md) | v1 | 초안 | Robbie | Sang-Hyun-Kim (리뷰: Robbie) |
@@ -19,7 +20,7 @@
 
 ## 공통 규칙
 
-> 상태: 합의(10/7 저녁, 성공 응답·요청 번호·`retryable`·`retryAfterSeconds` 추가. 10/12 [상태를 바꾸는 요청과 재전송](#상태를-바꾸는-요청과-재전송) 추가, 게임 담당 리뷰 전). 모든 API에 적용합니다. 바꿀 때는 이 절을 먼저 고치고 게임·웹서버 담당 모두에게 리뷰를 받습니다.
+> 상태: 합의(10/7 저녁, 성공 응답·요청 번호·`retryable`·`retryAfterSeconds` 추가. 10/12 [상태를 바꾸는 요청과 재전송](#상태를-바꾸는-요청과-재전송) 추가, 게임 담당 리뷰 전. 10/12 오류 본문의 기능별 추가 칸 추가(S4), 리뷰 전). 모든 API에 적용합니다. 바꿀 때는 이 절을 먼저 고치고 게임·웹서버 담당 모두에게 리뷰를 받습니다.
 
 | 항목 | 규칙 |
 |---|---|
@@ -68,8 +69,9 @@
 | `message` | 사람이 읽는 설명 |
 | `path` | 요청 경로 |
 | `retryable` | 같은 요청을 다시 보내도 되는지. 서버 쪽 문제(`500`·`503`)와 잠시 뒤 풀리는 충돌(`REQUEST_IN_PROGRESS`·`VERSION_CONFLICT`)은 `true`, 나머지는 `false`. 게임은 `true`일 때만 정한 횟수만큼 **같은 본문으로** 다시 보냅니다 |
-| `errors` | 검증 오류(`VALIDATION_FAILED`)일 때만 붙습니다. 필드별 오류 전부 |
+| `errors` | 검증 오류(`VALIDATION_FAILED`)와, 기능 명세가 정한 칸 오류(예: `STAT_MAX_EXCEEDED`, `SKILL_UNKNOWN`)에 붙습니다. 필드별 오류 전부 |
 | `retryAfterSeconds` | `429`일 때만 붙습니다. 다시 시도할 수 있기까지 남은 초. 같은 값이 표준 헤더 `Retry-After`에도 붙습니다 |
+| (기능별 추가 칸) | 기능 명세가 그 오류 코드에 정한 칸만 붙습니다(예: [skill-api.md](skill-api.md) `SKILL_REQUIREMENTS_NOT_MET`의 `requirements`). 이름과 모양은 그 명세에 적고, 게임은 모르는 칸을 무시합니다 |
 
 ### 오류 코드
 
@@ -119,7 +121,8 @@
 | 스테이지 플레이 시작 | DB: 계정 + 시작 `requestId` | [stage-play-api.md](stage-play-api.md) |
 | 결과 제출 | DB: 플레이 ID(한 플레이에 결과 하나) | [result-api.md](result-api.md) |
 | 스탯 투자 | Redis 처음 응답 + DB 변경 내역 | [stat-api.md](stat-api.md) "한 번만 반영" |
-| 스킬 해금(S4), 우편함(나중) | 스탯 투자와 같은 방법 | 각 명세 |
+| 스킬 해금 | 스탯 투자와 같은 방법(DB 마지막 방어: 계정 + 스킬 한 줄) | [skill-api.md](skill-api.md) "한 번만 반영" |
+| 우편함(나중) | 스탯 투자와 같은 방법 | 그 명세 |
 
 - Redis 키·명령 순서·기억 시간은 [redis-keys.md](redis-keys.md) `pw01:idem`에 있습니다.
 

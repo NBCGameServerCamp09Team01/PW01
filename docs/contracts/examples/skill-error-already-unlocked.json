@@ -1,0 +1,6 @@
+{
+  "code": "SKILL_ALREADY_UNLOCKED",
+  "message": "이미 해금한 스킬입니다.",
+  "path": "/accounts/me/skill-unlocks",
+  "retryable": false
+}
