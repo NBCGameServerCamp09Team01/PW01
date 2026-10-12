@@ -1,0 +1,6 @@
+{
+  "code": "STAT_POINTS_NOT_ENOUGH",
+  "message": "스탯 포인트가 부족합니다.",
+  "path": "/accounts/me/stat-investments",
+  "retryable": false
+}
