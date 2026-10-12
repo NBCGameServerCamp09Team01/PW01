@@ -12,14 +12,16 @@
             "name": "스테이지 1",
             "order": 1,
             "requires": null,
-            "waveCount": 5
+            "waveCount": 5,
+            "recommendedClearSeconds": 300
           },
           {
             "stageId": "stage.01.02",
             "name": "스테이지 2",
             "order": 2,
             "requires": "stage.01.01",
-            "waveCount": 5
+            "waveCount": 5,
+            "recommendedClearSeconds": 300
           }
         ]
       }

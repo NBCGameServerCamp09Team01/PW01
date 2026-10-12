@@ -1,0 +1,22 @@
+{
+  "data": {
+    "board": { "kind": "STAGE", "targetId": "stage.01.01", "difficulty": 0, "period": "weekly", "periodKey": "2026-W42" },
+    "items": [
+      {
+        "rank": 1, "accountId": "12", "nickname": "검성", "score": 4498,
+        "achievedAt": "2026-10-12T06:10:00.123Z",
+        "playTimeSeconds": 183.4, "clearedStageCount": null, "furthestStageId": null
+      },
+      {
+        "rank": 2, "accountId": "3", "nickname": "궁수왕", "score": 4498,
+        "achievedAt": "2026-10-12T07:00:00.000Z",
+        "playTimeSeconds": 183.4, "clearedStageCount": null, "furthestStageId": null
+      }
+    ],
+    "hasNext": true,
+    "nextCursor": "<CURSOR>"
+  },
+  "meta": {
+    "requestId": "0b6f3c1e-8a2d-4c6e-9f10-2a7b5d9e1c34"
+  }
+}

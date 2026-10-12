@@ -1,0 +1,11 @@
+{
+  "data": {
+    "board": { "kind": "STAGE", "targetId": "stage.01.01", "difficulty": 0, "period": "all", "periodKey": "all" },
+    "rank": 37, "score": 3115, "achievedAt": "2026-10-12T07:30:15.042Z",
+    "playTimeSeconds": 201.25, "clearedStageCount": null, "furthestStageId": null,
+    "totalCount": 120
+  },
+  "meta": {
+    "requestId": "0b6f3c1e-8a2d-4c6e-9f10-2a7b5d9e1c34"
+  }
+}

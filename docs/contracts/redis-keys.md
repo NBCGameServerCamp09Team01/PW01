@@ -1,6 +1,6 @@
 # Redis 키 규칙
 
-> 버전: v1.1 · 상태: 합의 · 사용: PW01WebServer · 담당: Sang-Hyun-Kim · 리뷰: Robbie
+> 버전: v1.3 · 상태: 합의(v1.3 랭킹 절은 초안, PR 리뷰 전) · 사용: PW01WebServer · 담당: Sang-Hyun-Kim · 리뷰: Robbie
 
 웹서버가 Redis에 쓰는 키의 이름·타입·만료 규칙입니다. 새 키를 쓰기 전에 여기에 먼저 추가합니다.
 
@@ -185,13 +185,264 @@ end
 return {count, redis.call('TTL', KEYS[1])}
 ```
 
+## 랭킹(v1.3)
+
+[ranking-api.md](ranking-api.md)의 순위 보드입니다. **원천은 MySQL**(랭킹 클리어 기록·스테이지 최고 기록·지역 점수·전체 총합·진행 표)이고, Redis 보드는 언제든 다시 채울 수 있는 사본입니다. 그래서 랭킹 키가 사라지거나 어긋나도 데이터를 잃지 않습니다.
+
+### 보드와 순서
+
+- 키 안의 `<보드>`:
+
+| 보드 | `<보드>` | 예 |
+|---|---|---|
+| 스테이지 전체 | `stage:<stageId>:d<난이도>:all` | `stage:stage.01.01:d0:all` |
+| 스테이지 주간 | `stage:<stageId>:d<난이도>:week:<YYYY-Www>` | `stage:stage.01.01:d0:week:2026-W42` |
+| 지역 전체·주간 | `region:<regionId>:d<난이도>:all` · `…:week:<YYYY-Www>` | `region:region.01:d0:all` |
+| 전체 총합 전체·주간 | `total:d<난이도>:all` · `…:week:<YYYY-Www>` | `total:d0:all` |
+| 진행 | `progress:all` | `progress:all` |
+
+- 주는 ISO 주(월요일 00:00 UTC 시작)입니다.
+- 순서: 보드 점수가 높을수록 위 → 같으면 먼저 달성 → 같으면 기록 순번이 작은 쪽.
+- **ZSet 점수 = −(보드 점수)**: 오름차순(`ZRANGE`)으로 읽으면 높은 점수가 먼저 옵니다. 보드 점수는 정수(스테이지 1,000~10,000, 지역·전체 총합은 그 합, 진행은 스테이지 수)라 double로 정확합니다.
+- **멤버 = `<달성 epoch 밀리초 13자리>:<기록 순번 20자리>:<계정 ID>:<상세>`**(앞 두 칸은 0으로 채움). 예: `1760249400123:00000000000000000042:12:183400`.
+  - Redis는 점수가 같으면 멤버를 바이트(문자) 순서로 세웁니다. 앞 두 칸의 자리 수를 고정했으므로 문자 순서 = "먼저 달성 → 먼저 기록"입니다. 기록 순번이 유일하므로 그 뒤 칸은 순서에 영향이 없습니다.
+  - 점수 하나(double)에 점수·달성 시각(밀리초)·순번을 함께 넣을 수 없어서 이렇게 나눴습니다. 달성 13자리는 2286년까지입니다.
+  - `<상세>`: 스테이지 보드 = 그 기록의 클리어 시간 ms, 지역·전체 총합 보드 = 클리어한 스테이지 수, 진행 보드 = 가장 먼 스테이지 키. 응답의 `playTimeSeconds`·`clearedStageCount`·`furthestStageId`에 씁니다.
+- 멤버가 기록마다 바뀌므로, 계정 ID로 지금 멤버를 찾는 해시를 함께 둡니다. 둘은 늘 스크립트 하나로 같이 고칩니다.
+- 빈 ZSet은 Redis가 지웁니다. 그래서 "보드가 있다(채워져 있다)"는 해시의 특수 필드 `@`로 판단합니다. 기록이 하나도 없는 보드도 `@`만 있는 해시로 있습니다.
+- 세 보드 모두 점수가 내려가지 않습니다(스테이지 최고·그 합·클리어 수). 그래서 "더 좋을 때만 바꿈" 하나로 갱신합니다.
+
+### 키
+
+| 키 패턴 | 자료형 | TTL | 용도 | 값 모양 | 쓰는 곳 | 장애 시 |
+|---|---|---|---|---|---|---|
+| `pw01:rank:<보드>` | ZSet | 전체·진행: 고칠 때마다 지금 + 전체 보드 수명 / 주간: 그 주 끝 + 주간 보관 기간(`EXPIREAT`) | 순위 | 점수 = −보드 점수, 멤버 = 위 멤버 | 결과 커밋 뒤 고침, RK1~RK8 조회 | MySQL로 대신 |
+| `pw01:rank:<보드>:member` | Hash | ZSet과 같음 | 계정 → 지금 멤버, 보드 있음 표시 | 필드 = 계정 ID(10진수) → 멤버, 필드 `@` → `1` | 같음 | MySQL로 대신 |
+| `pw01:rank:<보드>:build` | ZSet | 임시 보드 수명 | 다시 채우는 중의 임시 보드 | 위 ZSet과 같음 | 다시 채우기, 그사이 결과 커밋 | 다시 채우기 실패(다음에 다시) |
+| `pw01:rank:<보드>:build:member` | Hash | 임시 보드 수명 | 임시 보드의 계정 → 멤버, 채우는 중 표시 | 위 해시와 같음 | 같음 | 같음 |
+| `pw01:rank-lock:<보드>` | String | 다시 채우기 잠금 시간 | 한 보드를 서버 하나만 다시 채우게 | 그 서버의 임의 토큰 | 다시 채우기 시작·끝 | 다시 채우지 않고 MySQL로 대신 |
+
+- 값 모양은 모두 문자열·정수이고 `StringRedisTemplate` + `DefaultRedisScript`로 씁니다.
+- 랭킹 키의 "장애 시"는 **랭킹 명령만 실패하는 부분 장애**입니다. Redis 전체 장애면 그 전에 인증(세션 확인)에서 503입니다.
+- 크기(어림): 계정 하나가 ZSet 멤버 약 45바이트 + 해시 필드 하나. 계정 1만 명 × (스테이지 + 지역) 10개 × (전체 + 주간)이면 수십 MB 안쪽입니다. 실제 값은 구현 뒤 `MEMORY USAGE`로 적습니다.
+- 전체 보드에도 수명(30일)을 거는 이유: 운영 Redis가 메모리 부족 때 "만료가 있는 키부터" 지우는 정책이면, 만료 없는 랭킹 키는 남고 세션 키가 먼저 지워집니다. 랭킹은 사본이라 만료돼도 다시 채웁니다(운영 정책은 `noeviction` + 경보로 정함).
+
+### 설정 값
+
+| 값 | 기본값 | 설정 이름 | 환경 변수로 덮을 때 |
+|---|---|---|---|
+| 전체 보드 수명 | 30일. 전체·진행 보드를 고치거나 다시 채울 때마다 이 시간으로 다시 건다 | `pw01.ranking.all-board-ttl=30d` | `PW01_RANKING_ALLBOARDTTL` |
+| 주간 보드 보관 기간 | 14일. 그 주가 끝난 뒤 이만큼 지나면 주간 보드 키가 사라진다 | `pw01.ranking.weekly-retention=14d` | `PW01_RANKING_WEEKLYRETENTION` |
+| 다시 채우기 잠금 시간 | 30초 | `pw01.ranking.rebuild-lock-ttl=30s` | `PW01_RANKING_REBUILDLOCKTTL` |
+| 임시 보드 수명 | 60초. 다시 채우다 서버가 죽어도 이 시간이 지나면 사라진다 | `pw01.ranking.build-ttl=60s` | `PW01_RANKING_BUILDTTL` |
+| 다시 채우기 한 번에 넣는 줄 | 500 | `pw01.ranking.build-batch-size=500` | `PW01_RANKING_BUILDBATCHSIZE` |
+
+- 시간은 초 단위입니다(위 [설정 값](#설정-값)과 같은 규칙).
+- **임시 보드 수명 > 다시 채우기 잠금 시간 > 보드 하나를 다시 채우는 시간.** 잠금이 먼저 풀리면 다른 서버가 같은 보드를 다시 채우기 시작하고, 앞 서버의 끝내기는 잠금 토큰이 달라 실패합니다(잘못 바꿔 끼우지 않음). 계정 1만 명 보드는 1초 안쪽으로 예상하고, 구현 뒤 잰 값을 적습니다.
+
+### 명령 순서(랭킹)
+
+| 때 | 명령 | 결과 |
+|---|---|---|
+| 클리어 결과가 **커밋된 뒤**(서버 이벤트) | `rank_update.lua`를 스테이지 전체·주간, (스테이지 최고가 올랐으면) 지역·전체 총합 전체 기간, 지역·전체 총합 주간(그 주 합을 MySQL에서 읽음), (처음 클리어면) 진행 보드에 한 번씩 | 보드·임시 보드가 있으면 더 좋은 기록일 때만 바꿈. 둘 다 없으면 넣지 않음(다음 조회 때 MySQL에서 채우면 들어 있음) |
+| 위가 실패(Redis 명령 오류·시간 초과) | — | 보드마다 경고 로그 + 그 서버 메모리에 "다시 채울 보드" 표시. 결과 저장은 이미 끝나 있음 |
+| 목록(RK1·3·5·7) | `rank_page.lua` | 보드 없음 → 다시 채우기 / 시작 위치 + 줄 목록 |
+| 내 줄(RK2·4·6·8) | `rank_me.lua` | 보드 없음 → 다시 채우기 / 전체 수 + 내 순위·멤버·점수(없으면 전체 수만) |
+| 다시 채우기(보드 없음, 또는 다시 채울 보드 표시) | `rank_build_start.lua` → MySQL 읽기 → `rank_build_add.lua`(묶음마다) → `rank_build_finish.lua` | 끝나면 보드가 통째로 바뀌고 표시를 지움. 시작에서 잠금을 못 얻으면 이번 요청은 MySQL로 대신 |
+| 랭킹 명령이 실패 | — | 경고 로그, 이번 요청은 MySQL로 대신 |
+
+- 다시 채우기는 MySQL을 읽기 **전에** 임시 보드(`@`)를 만듭니다. 그 뒤에 커밋된 결과는 `rank_update.lua`가 임시 보드에도 넣으므로, 바꿔 끼운 보드에서 빠지지 않습니다. 그 전에 커밋된 결과는 MySQL 읽기에 들어 있습니다.
+- 전체 보드는 스테이지 최고 기록·지역 점수·전체 총합·진행 표에서, 주간 보드는 랭킹 클리어 기록 표에서 그 주만 걸러 계정별 최고(지역·전체 총합은 그 합)를 읽습니다.
+- "다시 채울 보드" 표시는 서버 메모리에 있어 서버가 다시 뜨면 사라집니다(알고 고른 한계, [ranking-api.md](ranking-api.md#서버가-순위를-두는-곳과-장애-때-응답)).
+
+### 랭킹 유의사항
+
+- **"처리 중 표시" 키가 둘입니다.** 중복 방지 `pw01:idem`의 `IN_PROGRESS`(v1.2)와 랭킹 다시 채우기 잠금 `pw01:rank-lock:<보드>`가 "한 번에 하나만 하게 막는 표시"라는 같은 일을 따로 합니다. 모양(토큰 비교, 수명)이 달라 지금은 묶지 않습니다. 셋째 쓰임이 생기면 공용 틀로 묶을지 봅니다.
+- **키 앞부분 `pw01:rank:`·`pw01:rank-lock:`은 랭킹 전용**입니다. 다른 기능은 쓰지 않습니다.
+- 랭킹 스크립트는 한 보드의 키 2~5개를 함께 다룹니다. 클러스터 모드면 같은 슬롯이어야 하므로 아래 "정할 것"(클러스터 모드를 끄고 복제만)을 따릅니다.
+
+### rank_update.lua
+
+```lua
+-- 한 계정의 줄을 보드에 넣는다. 그 계정의 지금 줄보다 좋을 때만 바꾼다(ZSet 점수 = −보드 점수가 작을수록, 같으면 멤버 문자 순서).
+-- 보드가 있으면 보드에, 다시 채우는 중이면 임시 보드에도 넣는다. 둘 다 없으면 넣지 않는다.
+-- KEYS[1] = pw01:rank:<보드>          KEYS[2] = pw01:rank:<보드>:member
+-- KEYS[3] = pw01:rank:<보드>:build    KEYS[4] = pw01:rank:<보드>:build:member
+-- ARGV[1] = 계정 ID, ARGV[2] = 멤버, ARGV[3] = ZSet 점수(−보드 점수)
+-- ARGV[4] = 보드 만료 시각(epoch 초). 0이면 만료를 건드리지 않음(서버는 늘 값을 넘김)
+-- 돌려줌: 1 = 바꿈, 0 = 그대로(더 좋지 않음), -1 = 보드가 없어 넣지 않음
+local function put(z, h)
+  local score = tonumber(ARGV[3])
+  local old = redis.call('HGET', h, ARGV[1])
+  if old then
+    local oldScore = tonumber(redis.call('ZSCORE', z, old))
+    if oldScore and (score > oldScore or (score == oldScore and ARGV[2] >= old)) then
+      return 0
+    end
+    redis.call('ZREM', z, old)
+  end
+  redis.call('ZADD', z, score, ARGV[2])
+  redis.call('HSET', h, ARGV[1], ARGV[2])
+  return 1
+end
+
+local result = -1
+if redis.call('HEXISTS', KEYS[2], '@') == 1 then
+  result = put(KEYS[1], KEYS[2])
+  if ARGV[4] ~= '0' then
+    redis.call('EXPIREAT', KEYS[1], ARGV[4])
+    redis.call('EXPIREAT', KEYS[2], ARGV[4])
+  end
+end
+if redis.call('HEXISTS', KEYS[4], '@') == 1 then
+  local r = put(KEYS[3], KEYS[4])
+  local ttl = redis.call('PTTL', KEYS[4])
+  if ttl > 0 then
+    redis.call('PEXPIRE', KEYS[3], ttl)
+  end
+  if result == -1 then
+    result = r
+  end
+end
+return result
+```
+
+### rank_page.lua
+
+```lua
+-- 순위 목록 한 묶음. 커서(마지막으로 준 줄의 점수·멤버) 다음부터 읽는다.
+-- KEYS[1] = pw01:rank:<보드>, KEYS[2] = pw01:rank:<보드>:member
+-- ARGV[1] = 읽을 줄 수(limit + 1, 한 줄 더 읽어 다음이 있는지 안다)
+-- ARGV[2] = 커서 줄의 ZSet 점수(없으면 빈 문자열), ARGV[3] = 커서 줄의 멤버
+-- 돌려줌: 보드가 없으면 nil / {시작 위치(0부터), {멤버, 점수, 멤버, 점수, …}}
+if redis.call('HEXISTS', KEYS[2], '@') == 0 then
+  return false
+end
+local start = 0
+if ARGV[2] ~= '' then
+  local s = redis.call('ZSCORE', KEYS[1], ARGV[3])
+  if s and tonumber(s) == tonumber(ARGV[2]) then
+    start = redis.call('ZRANK', KEYS[1], ARGV[3]) + 1
+  else
+    -- 커서 줄이 그사이 바뀌었으면(그 계정의 기록이 올라 멤버가 바뀜) 값으로 위치를 센다
+    start = redis.call('ZCOUNT', KEYS[1], '-inf', '(' .. ARGV[2])
+    local same = redis.call('ZRANGE', KEYS[1], ARGV[2], ARGV[2], 'BYSCORE')
+    for _, m in ipairs(same) do
+      if m <= ARGV[3] then
+        start = start + 1
+      end
+    end
+  end
+end
+local rows = redis.call('ZRANGE', KEYS[1], start, start + tonumber(ARGV[1]) - 1, 'WITHSCORES')
+return {start, rows}
+```
+
+### rank_me.lua
+
+```lua
+-- 내 순위.
+-- KEYS[1] = pw01:rank:<보드>, KEYS[2] = pw01:rank:<보드>:member
+-- ARGV[1] = 계정 ID
+-- 돌려줌: 보드가 없으면 nil / 기록이 없으면 {전체 수} / {전체 수, 순위(0부터), 멤버, 점수}
+if redis.call('HEXISTS', KEYS[2], '@') == 0 then
+  return false
+end
+local total = redis.call('ZCARD', KEYS[1])
+local m = redis.call('HGET', KEYS[2], ARGV[1])
+if not m then
+  return {total}
+end
+local r = redis.call('ZRANK', KEYS[1], m)
+if not r then
+  return {total}
+end
+return {total, r, m, redis.call('ZSCORE', KEYS[1], m)}
+```
+
+### rank_build_start.lua
+
+```lua
+-- 다시 채우기 시작. 잠금을 얻고 빈 임시 보드(@만 있음)를 만든다.
+-- KEYS[1] = pw01:rank-lock:<보드>, KEYS[2] = pw01:rank:<보드>:build, KEYS[3] = pw01:rank:<보드>:build:member
+-- ARGV[1] = 서버 토큰, ARGV[2] = 잠금 시간(초), ARGV[3] = 임시 보드 수명(초)
+-- 돌려줌: 1 = 시작, 0 = 다른 서버가 채우는 중
+if not redis.call('SET', KEYS[1], ARGV[1], 'NX', 'EX', ARGV[2]) then
+  return 0
+end
+redis.call('DEL', KEYS[2], KEYS[3])
+redis.call('HSET', KEYS[3], '@', '1')
+redis.call('EXPIRE', KEYS[3], ARGV[3])
+return 1
+```
+
+### rank_build_add.lua
+
+```lua
+-- MySQL에서 읽은 기록 묶음을 임시 보드에 넣는다. 비교 규칙은 rank_update.lua와 같다.
+-- KEYS[1] = pw01:rank:<보드>:build, KEYS[2] = pw01:rank:<보드>:build:member
+-- ARGV = 계정 ID, 멤버, ZSet 점수(−보드 점수)를 한 줄씩 이어 붙임(줄 수 × 3)
+-- 돌려줌: 바꾼 줄 수, 임시 보드가 사라졌으면 -1
+if redis.call('HEXISTS', KEYS[2], '@') == 0 then
+  return -1
+end
+local changed = 0
+for i = 1, #ARGV, 3 do
+  local id, member, score = ARGV[i], ARGV[i + 1], tonumber(ARGV[i + 2])
+  local old = redis.call('HGET', KEYS[2], id)
+  local oldScore = old and tonumber(redis.call('ZSCORE', KEYS[1], old))
+  if not (oldScore and (score > oldScore or (score == oldScore and member >= old))) then
+    if old then
+      redis.call('ZREM', KEYS[1], old)
+    end
+    redis.call('ZADD', KEYS[1], score, member)
+    redis.call('HSET', KEYS[2], id, member)
+    changed = changed + 1
+  end
+end
+local ttl = redis.call('PTTL', KEYS[2])
+if ttl > 0 then
+  redis.call('PEXPIRE', KEYS[1], ttl)
+end
+return changed
+```
+
+### rank_build_finish.lua
+
+```lua
+-- 다시 채우기 끝. 잠금이 아직 내 것이고 임시 보드가 살아 있으면 보드를 통째로 바꿔 끼운다.
+-- KEYS[1] = pw01:rank:<보드>, KEYS[2] = pw01:rank:<보드>:member
+-- KEYS[3] = pw01:rank:<보드>:build, KEYS[4] = pw01:rank:<보드>:build:member, KEYS[5] = pw01:rank-lock:<보드>
+-- ARGV[1] = 서버 토큰, ARGV[2] = 보드 만료 시각(epoch 초). 0이면 만료 없음(서버는 늘 값을 넘김)
+-- 돌려줌: 1 = 바꿔 끼움, 0 = 잠금을 잃었거나 임시 보드가 만료됨(바꾸지 않음)
+if redis.call('GET', KEYS[5]) ~= ARGV[1] or redis.call('HEXISTS', KEYS[4], '@') == 0 then
+  return 0
+end
+if redis.call('EXISTS', KEYS[3]) == 1 then
+  redis.call('RENAME', KEYS[3], KEYS[1])
+else
+  redis.call('DEL', KEYS[1])
+end
+redis.call('RENAME', KEYS[4], KEYS[2])
+if ARGV[2] == '0' then
+  redis.call('PERSIST', KEYS[1])
+  redis.call('PERSIST', KEYS[2])
+else
+  redis.call('EXPIREAT', KEYS[1], ARGV[2])
+  redis.call('EXPIREAT', KEYS[2], ARGV[2])
+end
+redis.call('DEL', KEYS[5])
+return 1
+```
+
 ## 정할 것
 
 | 무엇 | 지금 | 누가 |
 |---|---|---|
 | 접속 점검 간격, 허용 연속 실패 횟수 | 위 "값의 관계"에 맞춰 | Robbie·Juunnmmoo |
 | 키 이름 규칙 | 용도 먼저(`pw01:<용도>:<식별자>`, v1). v0 틀은 도메인 먼저였음 | Sang-Hyun-Kim |
-| Redis 클러스터(배포 때) | 세션 스크립트는 키 둘을 함께 다룬다. 클러스터 모드에서는 두 키가 같은 슬롯이어야 하므로 클러스터 모드를 끄거나(복제만) 해시 태그를 쓴다 | Sang-Hyun-Kim(배포 때) |
+| Redis 클러스터(배포 때) | 세션 스크립트는 키 둘을, 랭킹 스크립트는 한 보드의 키 2~5개를 함께 다룬다. 클러스터 모드에서는 그 키들이 같은 슬롯이어야 하므로 클러스터 모드를 끄거나(복제만) 해시 태그를 쓴다 | Sang-Hyun-Kim(배포 때) |
+| 랭킹 "다시 채울 보드" 표시를 잃지 않게 | 서버 메모리. 확장 때 아웃박스 표 또는 관리자 다시 채우기 명령 | Sang-Hyun-Kim |
 
 ## 변경 이력
 
@@ -200,3 +451,4 @@ return {count, redis.call('TTL', KEYS[1])}
 | v0 | 2026-09-28 | 문서 틀 생성 |
 | v1 | 2026-10-07 | 첫 흐름 키 3개(세션·계정 세션·로그인 실패), Redis 접근 규칙, 설정 값(세션 10분·요청마다 연장, 1분 안에 5번 실패하면 1분 잠김, 모두 설정으로 바꿈), 명령 순서, Lua 4개 |
 | v1.1 | 2026-10-07 | 인증 방식 결정 기록 추가(불투명 토큰 + Redis 세션, HandlerInterceptor, 이유·대가·다시 볼 때). 키·스크립트는 바뀌지 않음 |
+| v1.3 | 2026-10-12 | 랭킹 절: 보드 이름(스테이지·지역·전체 총합 × 난이도 × 전체·주간, 진행), ZSet 점수 = −보드 점수, 멤버 = 달성 ms + 기록 순번 + 계정 ID + 상세, 키(ZSet + 계정 → 멤버 해시, 임시 보드, 다시 채우기 잠금), 설정 5개(전체 보드 30일, 주간 보관 14일, 잠금 30초, 임시 보드 60초, 묶음 500), 명령 순서(커밋 뒤 갱신, 실패 표시, 다시 채우기, 부분 장애 때 MySQL), Lua 6개, 유의사항. v1.2(중복 방지 키, `docs/s3-stat-api`) 다음 판 |

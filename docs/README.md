@@ -9,6 +9,7 @@
 | [contracts/README.md](contracts/README.md) | 게임 ↔ 웹서버 명세 목록과 현재 버전 | 초안 |
 | [contracts/result-api.md](contracts/result-api.md) | 결과 API | 작성 전 |
 | [contracts/redis-keys.md](contracts/redis-keys.md) | Redis 키 규칙 | 작성 전 |
+| [contracts/ranking-api.md](contracts/ranking-api.md) | 랭킹 API(스테이지·지역 총합·전체 총합·진행 순위, 전체·주간) | 초안 v1 |
 | [contracts/examples/](contracts/examples/) | 요청·응답 JSON 예시 | 작성 전 |
 | 일정 | 마일스톤·마감 | 자리만 (추후 추가) |
 

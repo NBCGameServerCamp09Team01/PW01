@@ -1,6 +1,6 @@
 # 스테이지 API (Stage API)
 
-> 버전: v1.1 · 상태: 초안 · 호출: 게임 클라이언트(UE) → 웹서버 · 게임 담당: Sang-Hyun-Kim · 웹서버 담당: Sang-Hyun-Kim (리뷰: Robbie)
+> 버전: v1.2 · 상태: 초안 · 호출: 게임 클라이언트(UE) → 웹서버 · 게임 담당: Sang-Hyun-Kim · 웹서버 담당: Sang-Hyun-Kim (리뷰: Robbie)
 
 지역 → 스테이지 정의(모두에게 같음)와 내 진행(열림·잠김·클리어)입니다. 스테이지를 시작할 수 있는지는 스테이지 플레이 시작([stage-play-api.md](stage-play-api.md))에서 서버가 다시 확인합니다.
 
@@ -48,6 +48,7 @@
 | `stages[].order` | integer | 지역 안 화면 순서. 1부터 |
 | `stages[].requires` | string \| null | 이 스테이지를 클리어하면 열립니다. 첫 스테이지는 `null`(칸은 늘 있음). 잠김 안내 문구에 씁니다 |
 | `stages[].waveCount` | integer | 웨이브 수 |
+| `stages[].recommendedClearSeconds` | integer | 권장 클리어 시간(초, 1 이상). 랭킹 점수의 기준입니다([ranking-api.md 점수](ranking-api.md#점수)). 게임에 시간 제한은 없습니다 |
 
 | 상태 코드 | 의미 | 본문 |
 |---|---|---|
@@ -104,6 +105,9 @@
 |---|---|---|---|---|
 | `STAGE_NOT_FOUND` | 404 | 없는 `stageId`로 스테이지 플레이를 시작함 | false | "스테이지 정보를 찾을 수 없습니다." 안내 후 메인메뉴. 게임·서버 키가 어긋난 버그입니다 |
 | `STAGE_LOCKED` | 403 | 아직 열리지 않은 스테이지로 스테이지 플레이를 시작함 | false | "아직 열리지 않은 스테이지입니다." 안내 후 메인메뉴. 선택 화면이 먼저 막으므로 보통은 나오지 않습니다 |
+| `REGION_NOT_FOUND` | 404 | 없는 `regionId`(지역 순위, [ranking-api.md](ranking-api.md)) | false | 게임·서버 키가 어긋난 버그. 로그 |
+
+- `STAGE_NOT_FOUND`는 랭킹 API의 없는 `stageId`에도 씁니다.
 
 - `STAGE_LOCKED`는 다시 보내도 결과가 같으므로 409(다시 보내면 될 수 있는 충돌)가 아니라 403으로 둡니다. 게임은 HTTP 상태가 아니라 `code`로 나눕니다(403 `ACCOUNT_SUSPENDED`와 섞이지 않음).
 - 예시: `examples/stage-error-locked.json`
@@ -114,3 +118,4 @@
 |---|---|---|
 | v1 | 2026-10-08 | 초안: 키 규칙, ST1 스테이지 정의(공개), ST2 내 스테이지 진행, 판 시작·결과에서의 약속(판에 웨이브 수 저장, 결과 본문의 스테이지 비교), 오류 두 개 |
 | v1.1 | 2026-10-09 | 판 시작(`POST /runs`)·결과(`/runs/{runId}/result`)를 스테이지 플레이 API([stage-play-api.md](stage-play-api.md))와 새 결과 경로로 바꿈. "판"·"판 번호" 표기를 스테이지 플레이·스테이지 플레이 ID로. 예시 오류의 `path`. 동작·칸은 그대로 |
+| v1.2 | 2026-10-12 | ST1 `stages[].recommendedClearSeconds`(권장 클리어 시간, 랭킹 점수 기준) 칸 추가, 오류 `REGION_NOT_FOUND`(랭킹 지역 순위). 응답 칸 추가라 호환 |

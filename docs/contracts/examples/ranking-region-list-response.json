@@ -1,0 +1,17 @@
+{
+  "data": {
+    "board": { "kind": "REGION", "targetId": "region.01", "difficulty": 0, "period": "all", "periodKey": "all" },
+    "items": [
+      {
+        "rank": 1, "accountId": "12", "nickname": "검성", "score": 8218,
+        "achievedAt": "2026-10-12T06:40:12.500Z",
+        "playTimeSeconds": null, "clearedStageCount": 2, "furthestStageId": null
+      }
+    ],
+    "hasNext": false,
+    "nextCursor": null
+  },
+  "meta": {
+    "requestId": "0b6f3c1e-8a2d-4c6e-9f10-2a7b5d9e1c34"
+  }
+}
