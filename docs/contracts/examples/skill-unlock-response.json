@@ -1,0 +1,23 @@
+{
+  "data": {
+    "result": {
+      "skillTag": "Account.Skill.CounterPlus",
+      "unlockedSkills": ["Account.Skill.Combo4", "Account.Skill.CounterPlus"],
+      "statPoints": 3,
+      "version": 6
+    },
+    "saveStatus": "SAVED",
+    "account": {
+      "accountId": "2",
+      "version": 6,
+      "accountLevel": 4,
+      "experience": 150,
+      "statPoints": 3,
+      "investedStats": {},
+      "unlockedSkills": ["Account.Skill.Combo4", "Account.Skill.CounterPlus"]
+    }
+  },
+  "meta": {
+    "requestId": "5c1d8f2a-7b3e-4a90-b6d1-2e8f4c7a9b05"
+  }
+}
