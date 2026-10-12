@@ -129,7 +129,7 @@
 | `skills[].skillTag` | string | 스킬 태그 | `Definition.SkillTag` |
 | `skills[].state` | string | `LOCKED`(조건 또는 선행 미충족) · `NEED_POINTS`(조건·선행은 충족, 포인트 부족) · `UNLOCKABLE`(해금 가능) · `UNLOCKED`(해금함) | `State` |
 | `skills[].cost` | integer | 비용(스탯 포인트) | `Definition.StatPointCost` |
-| `skills[].requirements` | array | K1 [조건 미충족 응답](#조건-미충족-응답)과 같은 모양. `UNLOCKED`면 빈 배열 | `Requirements` |
+| `skills[].requirements` | array | K1 [조건 미충족 응답](#조건-미충족-응답)과 같은 모양. `UNLOCKED`도 보냄(표시용. 누적 기록은 해금해도 줄지 않음) | `Requirements` |
 | `statPoints` | integer | 지금 남은 포인트 | — |
 | `version` | integer | 계정 `version` | — |
 
