@@ -1,0 +1,30 @@
+{
+  "data": {
+    "result": {
+      "statPoints": 2,
+      "investedStats": {
+        "Account.Stat.MaxHealth": 2,
+        "Account.Stat.AttackPower": 1,
+        "Account.Stat.DefensePower": 1
+      },
+      "version": 4
+    },
+    "saveStatus": "SAVED",
+    "account": {
+      "accountId": "2",
+      "version": 4,
+      "accountLevel": 4,
+      "experience": 210,
+      "statPoints": 2,
+      "investedStats": {
+        "Account.Stat.MaxHealth": 2,
+        "Account.Stat.AttackPower": 1,
+        "Account.Stat.DefensePower": 1
+      },
+      "unlockedSkills": []
+    }
+  },
+  "meta": {
+    "requestId": "9d1a7e52-3c48-4f0b-8e26-5b7c1d0a4f93"
+  }
+}

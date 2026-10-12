@@ -8,6 +8,7 @@
 | [git-workflow.md](git-workflow.md) | 팀 규칙: 브랜치·커밋·LFS·맵 담당·작업 순서 | 확정 |
 | [contracts/README.md](contracts/README.md) | 게임 ↔ 웹서버 명세 목록과 현재 버전 | 초안 |
 | [contracts/result-api.md](contracts/result-api.md) | 결과 API | 작성 전 |
+| [contracts/stat-api.md](contracts/stat-api.md) | 스탯 투자 API(묶음 올림·내림) | 초안 v1 |
 | [contracts/redis-keys.md](contracts/redis-keys.md) | Redis 키 규칙 | 작성 전 |
 | [contracts/ranking-api.md](contracts/ranking-api.md) | 랭킹 API(스테이지·지역 총합·전체 총합·진행 순위, 전체·주간) | 초안 v1 |
 | [contracts/examples/](contracts/examples/) | 요청·응답 JSON 예시 | 작성 전 |
