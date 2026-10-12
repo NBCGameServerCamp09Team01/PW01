@@ -1,0 +1,11 @@
+{
+  "data": {
+    "board": { "kind": "REGION", "targetId": "region.01", "difficulty": 0, "period": "weekly", "periodKey": "2026-W42" },
+    "rank": null, "score": null, "achievedAt": null,
+    "playTimeSeconds": null, "clearedStageCount": null, "furthestStageId": null,
+    "totalCount": 0
+  },
+  "meta": {
+    "requestId": "0b6f3c1e-8a2d-4c6e-9f10-2a7b5d9e1c34"
+  }
+}
