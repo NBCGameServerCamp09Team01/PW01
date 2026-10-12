@@ -1,6 +1,6 @@
 # 결과 API (Result API)
 
-> 버전: v1 · 상태: 초안 · 호출: 게임 클라이언트(UE) → 웹서버 · 게임 담당: Robbie · 웹서버 담당: Robbie (리뷰: Sang-Hyun-Kim)
+> 버전: v1.1 · 상태: 초안 · 호출: 게임 클라이언트(UE) → 웹서버 · 게임 담당: Robbie · 웹서버 담당: Robbie (리뷰: Sang-Hyun-Kim)
 
 스테이지 플레이가 끝나면(클리어·실패) 게임이 결과를 보내고, 서버가 **검사 → 보상 계산 → 저장 → 진행 반영**을 한 번에 합니다. 같은 플레이의 결과는 **한 번만** 반영합니다. 저장된 결과는 다시 받을 수 있습니다.
 
@@ -139,11 +139,11 @@ R1의 `data.result`와 R2의 `data`가 같은 모양입니다.
 | 같은 플레이의 결과가 **동시에** 둘 | 하나는 `SAVED`, 다른 하나는 `ALREADY_SAVED`. 뒤 요청은 기본 키 충돌로 되돌아간 뒤 다시 해서 처음 결과를 받습니다 |
 | 같은 계정의 다른 저장과 부딪힘(계정 값 `version`) | 서버가 새 트랜잭션으로 몇 번 다시 합니다(설정 `pw01.stage-play.save-attempts`, 처음 3). 넘으면 409 `VERSION_CONFLICT`(`retryable: true`) |
 
-게임의 재전송(지금)
+게임의 재전송([README.md 재전송 규칙](README.md#재전송-규칙))
 
-1. `retryable: true`이거나 연결 실패면 **같은 본문(같은 `requestId`)**으로 한 번 더 보냅니다.
-2. 200(`SAVED`·`ALREADY_SAVED`)이면 끝. `retryable: false`면 다시 보내지 않고 `code`를 남깁니다.
-3. 결과를 디스크에 보관했다가 다음 로그인 뒤 보내는 것은 다음 작업입니다([정할 것](#정할-것)). 그때는 [stage-play-api.md P1](stage-play-api.md#p1-시작--post-accountsmestage-plays)의 409 처리에서 포기하기 전에 보관 결과부터 보냅니다.
+1. `retryable: true`이거나 연결 실패면 **같은 본문(같은 `requestId`)**으로 자동으로 다시 보내고, 그래도 실패하면 "다시 시도 / 게임 종료"를 묻습니다.
+2. 200(`SAVED`·`ALREADY_SAVED`)이면 끝. `retryable: false`면 다시 보내지 않고 이유를 보입니다.
+3. 계속 실패하면 결과를 계정별로 디스크에 보관했다가(유효 기간: 플레이 마감) 다음 로그인 뒤 같은 본문으로 보냅니다. [stage-play-api.md P1](stage-play-api.md#p1-시작--post-accountsmestage-plays)의 409 처리에서도 포기하기 전에 보관 결과부터 보냅니다.
 
 ## 오류
 
@@ -163,7 +163,6 @@ R1의 `data.result`와 R2의 `data`가 같은 모양입니다.
 | 무엇 | 지금 | 누가 |
 |---|---|---|
 | 내 결과 기록 목록 | 없음. 필요해지면 `GET /accounts/me/stage-results`(최근순, 커서)로 더함 | Robbie |
-| 보관 결과 재전송(게임을 다시 켠 뒤) | 같은 세션 안 한 번 재시도까지. 디스크 보관·로그인 뒤 재전송은 다음 | Robbie |
 | `requestId`의 공통 중복 방지(Redis) | 없음. 결과는 플레이 ID 기본 키로 한 번만 반영 | Robbie·Sang-Hyun-Kim |
 | 누적 통계에 더할 기록 키(스킬 해금 조건 재료) | v1은 결과 칸(판 수·클리어·처치·골드)만 누적 | Robbie·S4 담당 |
 | 타당성 상한 조이기, `earnedGold`·`killCount` 상한 | 경과 + 60초, 2시간 / 상한 없음 | Robbie(거절 로그 보고) |
@@ -175,3 +174,4 @@ R1의 `data.result`와 R2의 `data`가 같은 모양입니다.
 | v0 | 2026-09-28 | 문서 틀 생성 |
 | v0 | 2026-10-05 | 호출 주체를 게임 클라이언트로 변경(싱글 게임 구조) |
 | v1 | 2026-10-09 | 초안: 결과를 스테이지 플레이 밑으로(R1 `POST`·R2 `GET …/{stagePlayId}/result`, 판 시작은 [stage-play-api.md](stage-play-api.md)로). `saveStatus`(`SAVED`·`ALREADY_SAVED`), 검사 순서(플레이 상태를 보상 전에), 보상(서버 계산, 총 경험치 기준), 플레이 ID로 한 번만 반영, 오류 `STAGE_RESULT_NOT_FOUND` |
+| v1.1 | 2026-10-12 | 게임의 재전송을 README 재전송 규칙으로: 자동 재시도 → 묻기 → 디스크 보관 → 로그인 뒤 재전송(S5). "정할 것"의 보관 재전송 줄 삭제. 서버 동작·칸은 그대로 |

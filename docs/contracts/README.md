@@ -6,7 +6,7 @@
 |---|---|---|---|---|
 | [auth-api.md](auth-api.md) | v1.1 | 초안 | Juunnmmoo | Robbie (리뷰: Sang-Hyun-Kim) |
 | [account-api.md](account-api.md) | v1 | 초안 | Juunnmmoo | Robbie (리뷰: Sang-Hyun-Kim) |
-| [result-api.md](result-api.md) | v1 | 초안 | Robbie | Robbie (리뷰: Sang-Hyun-Kim) |
+| [result-api.md](result-api.md) | v1.1 | 초안 | Robbie | Robbie (리뷰: Sang-Hyun-Kim) |
 | [stage-api.md](stage-api.md) | v1.1 | 초안 | Sang-Hyun-Kim | Sang-Hyun-Kim (리뷰: Robbie) |
 | [stage-play-api.md](stage-play-api.md) | v1 | 초안 | Robbie | Sang-Hyun-Kim (리뷰: Robbie) |
 | [realtime-api.md](realtime-api.md) | v1.1 | 초안 | Juunnmmoo | Juunnmmoo (리뷰: Sang-Hyun-Kim 배정) |
@@ -82,6 +82,24 @@
 
 - 위 표에 없는 HTTP 오류는 상태 이름을 코드로 씁니다(예: 415 → `UNSUPPORTED_MEDIA_TYPE`).
 - 기능별 오류 코드(예: `ACCOUNT_LOGIN_ID_DUPLICATED`)는 각 명세의 "오류" 표에 적습니다.
+- 같은 `requestId`로 처리하는 공통 코드: `IDEMPOTENCY_KEY_REUSED`(409, 같은 `requestId`에 다른 본문, `retryable: false`), `REQUEST_IN_PROGRESS`(409, 같은 `requestId`의 처음 요청이 아직 처리 중, `retryable: true`), `VERSION_CONFLICT`(409, 같은 계정의 저장이 계속 부딪힘, `retryable: true`). 쓰는 기능의 명세에 적습니다.
+
+### 재전송 규칙
+
+> 상태: 초안(S5 오류 안내·끊김 복구). 게임이 실패한 요청을 다시 보내는 규칙입니다. 서버는 다시 온 요청도 처음과 같은 검사를 합니다.
+
+| 항목 | 규칙 |
+|---|---|
+| 다시 보내는 방법 | 상태를 바꾸는 요청은 **같은 `requestId`·같은 본문**으로 다시 보냅니다. 조회는 그대로 다시 보냅니다 |
+| 다시 보내는 경우 | 응답이 없음(연결 실패·시간 초과), `retryable: true`(`500`·`503`·`VERSION_CONFLICT`·`REQUEST_IN_PROGRESS`), 오류 본문이 없는 5xx(프록시의 502·504 등). 그 밖(`retryable: false`)은 다시 보내지 않습니다 |
+| 다시 보내지 않는 경우 | `401`(로그인 상태를 끝냄, [auth-api.md](auth-api.md#인증-확인-순서와-실패-코드)), `429`(`retryAfterSeconds`가 지난 뒤 사용자가 다시 시도), 나머지 4xx |
+| 횟수·간격 | 게임 설정 값(UE `DefaultGame.ini`의 `[/Script/ProjectWarrior.WarriorApiSettings]`). 기본: 서버 장애(`retryable: true`·5xx)는 자동 2번(1초, 3초 뒤), 응답이 없으면(서버 꺼짐) 자동 재시도 없이 → 플레이어에게 "다시 시도 / 게임 종료"를 한 번 묻습니다 |
+| 보관 | 상태 변경 요청이 처음 실패하면 게임이 **계정별로 디스크에 보관**합니다(그 뒤 성공하면 지움). 묻기 뒤에도 실패하면 "게임을 종료합니다"를 안내하고 끝냅니다. 그 계정이 다시 로그인하면 같은 `requestId`·같은 본문으로 다시 보냅니다. 토큰은 보관하지 않습니다 |
+| 보관 대상 | 지금은 결과 제출([result-api.md R1](result-api.md#r1-결과-제출--post-accountsmestage-playsstageplayidresult))만. 스테이지 플레이 시작·포기는 보관하지 않습니다(남은 진행 중 플레이는 다음 시작의 409 처리가 정리) |
+| 보관 유효 기간 | 결과 제출: 스테이지 플레이 마감(`expiresAt`, 시작 + 24시간)까지. 그 밖의 종류: 보관한 뒤 24시간(게임 설정 값). 지난 보관본은 보내지 않고 지웁니다 |
+| 오래된 요청 | 서버는 기능별 코드로 거절합니다(결과: `STAGE_PLAY_EXPIRED`). 새 공통 코드는 두지 않습니다. 게임은 `retryable: false` 거절을 받으면 보관본을 지우고 이유를 보입니다 |
+| 한 번만 반영 | 같은 요청이 두 번 와도 한 번만 반영되는 것은 서버가 맡습니다(결과: 스테이지 플레이 ID 기본 키, 그 밖: `requestId` 중복 방지) |
+| 서버 상태 확인 | 게임은 타이틀에서 `GET /actuator/health`(인증 없음, 웹서버가 노출하는 유일한 actuator 경로)로 서버를 확인하고, 응답이 없거나 200이 아니면 안내 후 종료합니다. 경로 규칙(기능 이름부터)의 예외입니다 |
 
 ## 변경 절차
 
