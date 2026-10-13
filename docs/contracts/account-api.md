@@ -1,6 +1,6 @@
 # 계정 API (Account API)
 
-> 버전: v1 · 상태: 초안 · 호출: 게임 클라이언트(UE) → 웹서버 · 게임 담당: Juunnmmoo · 웹서버 담당: Robbie (리뷰: Sang-Hyun-Kim)
+> 버전: v1.2 · 상태: 초안 · 호출: 게임 클라이언트(UE) → 웹서버 · 게임 담당: Juunnmmoo · 웹서버 담당: Robbie (리뷰: Sang-Hyun-Kim)
 
 계정의 메인화면 값(계정 스냅샷)입니다. 로그인 응답의 `data.account`도 같은 모양입니다.
 
@@ -24,11 +24,12 @@
 | `accountLevel` | integer | 계정 레벨. 1부터 | `AccountLevel` |
 | `experience` | integer | 지금 레벨 안의 경험치 | `Experience` |
 | `statPoints` | integer | 남은 스탯 포인트 | `StatPoints` |
-| `investedStats` | object | 스탯 태그 이름 → 투자 포인트. 첫 흐름에서는 늘 `{}` | `InvestedStats` |
-| `unlockedSkills` | string[] | 해금한 스킬 태그 이름. 첫 흐름에서는 늘 `[]` | `UnlockedSkills` |
+| `investedStats` | object | 스탯 태그 이름 → 투자 포인트. **투자한 스탯만**(0인 스탯은 빠짐). 투자는 [stat-api.md](stat-api.md) | `InvestedStats` |
+| `unlockedSkills` | string[] | 해금한 스킬 태그 이름(태그 이름순). 해금은 [skill-api.md](skill-api.md) | `UnlockedSkills` |
 
 - 누적 경험치는 서버 계산용이라 보내지 않습니다.
-- `investedStats`·`unlockedSkills`는 스탯 분배(S3)·스킬 해금(S4)에서 채웁니다. 그때 이 명세를 v1.1로 올립니다.
+- 이 스냅샷은 로그인 응답, A3, 그리고 계정 값을 바꾸는 요청의 응답 `data.account`(결과 제출 [result-api.md](result-api.md), 투자 [stat-api.md](stat-api.md), 해금 [skill-api.md](skill-api.md))가 같이 씁니다. 게임은 `version`이 지금 값보다 크면 적용합니다.
+- 받는 쪽은 `investedStats`와 `unlockedSkills`를 **통째로 바꿉니다**(칸이 빠진 스탯은 0, 목록에 없는 스킬은 해금 안 됨).
 - UE의 `SchemaVersion`은 UE 구조체 버전이라 `version`과 다릅니다. 서버가 보내지 않는 UE 칸(`ExternalCurrencies`, `RewardedRecordIds`)은 덮어쓰지 않도록 받는 쪽에서 지금 값을 유지합니다.
 
 ## A3. 메인화면 값 — `GET /accounts/me`
@@ -54,3 +55,5 @@
 | 버전 | 날짜 | 내용 |
 |---|---|---|
 | v1 | 2026-10-07 | A3 메인화면 값과 계정 스냅샷 작성(공통 응답 `{data, meta}` 기준). Postman 런타임 시험 통과 |
+| v1.1 | 2026-10-12 | `investedStats`를 스탯 투자(S3, stat-api.md)에서 채움(0인 스탯은 뺌), 스냅샷을 쓰는 응답 목록 |
+| v1.2 | 2026-10-12 | `unlockedSkills`를 스킬 해금(S4, skill-api.md)에서 채움(태그 이름순, 통째로 교체) |

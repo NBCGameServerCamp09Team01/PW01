@@ -1,0 +1,9 @@
+{
+  "code": "STAT_MAX_EXCEEDED",
+  "message": "최대 포인트를 넘는 스탯이 있습니다.",
+  "path": "/accounts/me/stat-investments",
+  "retryable": false,
+  "errors": [
+    { "field": "investments[0].statTag", "message": "Account.Stat.MaxHealth는 최대 10포인트입니다(지금 9, 요청 +2)." }
+  ]
+}

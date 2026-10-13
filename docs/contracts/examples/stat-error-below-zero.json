@@ -1,0 +1,9 @@
+{
+  "code": "STAT_BELOW_ZERO",
+  "message": "투자한 포인트보다 많이 내릴 수 없습니다.",
+  "path": "/accounts/me/stat-investments",
+  "retryable": false,
+  "errors": [
+    { "field": "investments[2].statTag", "message": "Account.Stat.DefensePower는 지금 1포인트라 2만큼 내릴 수 없습니다." }
+  ]
+}

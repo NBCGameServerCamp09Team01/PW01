@@ -1,0 +1,6 @@
+{
+  "code": "RANK_INVALID_CURSOR",
+  "message": "목록 위치가 올바르지 않습니다. 처음부터 다시 받으세요.",
+  "path": "/rankings/stages/stage.01.01",
+  "retryable": false
+}
