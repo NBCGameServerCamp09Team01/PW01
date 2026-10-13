@@ -1,0 +1,17 @@
+{
+  "data": {
+    "stagePlayId": "3f2b8c1e-7a4d-4e2f-9b10-6c5d4e3f2a1b",
+    "accountId": "1",
+    "stageId": "stage.01.01",
+    "difficulty": 0,
+    "waveCount": 5,
+    "status": "FAILED",
+    "endReason": "ABANDONED",
+    "startedAt": "2026-10-09T03:00:00.123Z",
+    "expiresAt": "2026-10-10T03:00:00.123Z",
+    "endedAt": "2026-10-09T05:12:40.512Z"
+  },
+  "meta": {
+    "requestId": "8c4a2e6f-1d3b-4f7a-9c2e-6b8d0f4a1e57"
+  }
+}
