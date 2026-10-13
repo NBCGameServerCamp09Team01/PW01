@@ -5,10 +5,10 @@
 | 명세 | 현재 버전 | 상태 | 게임 담당 | 웹서버 담당 |
 |---|---|---|---|---|
 | [auth-api.md](auth-api.md) | v1.1 | 초안 | Juunnmmoo | Robbie (리뷰: Sang-Hyun-Kim) |
-| [account-api.md](account-api.md) | v1.2 | 초안 | Juunnmmoo | Robbie (리뷰: Sang-Hyun-Kim) |
+| [account-api.md](account-api.md) | v1.3 | 초안 | Juunnmmoo | Robbie (리뷰: Sang-Hyun-Kim) |
 | [stat-api.md](stat-api.md) | v1 | 구현됨 | Robbie | Robbie (리뷰: Sang-Hyun-Kim) |
 | [skill-api.md](skill-api.md) | v1 | 초안 | Robbie | Robbie (리뷰: Sang-Hyun-Kim) |
-| [result-api.md](result-api.md) | v1.1 | 초안 | Robbie | Robbie (리뷰: Sang-Hyun-Kim) |
+| [result-api.md](result-api.md) | v1.2 | 초안 | Robbie | Robbie (리뷰: Sang-Hyun-Kim) |
 | [stage-api.md](stage-api.md) | v1.2 | 초안 | Sang-Hyun-Kim | Sang-Hyun-Kim (리뷰: Robbie) |
 | [stage-play-api.md](stage-play-api.md) | v1.1 | 초안 | Robbie | Sang-Hyun-Kim (리뷰: Robbie) |
 | [realtime-api.md](realtime-api.md) | v1.1 | 초안 | Juunnmmoo | Juunnmmoo (리뷰: Sang-Hyun-Kim 배정) |

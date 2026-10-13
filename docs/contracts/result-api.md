@@ -1,6 +1,6 @@
 # 결과 API (Result API)
 
-> 버전: v1.1 · 상태: 초안 · 호출: 게임 클라이언트(UE) → 웹서버 · 게임 담당: Robbie · 웹서버 담당: Robbie (리뷰: Sang-Hyun-Kim)
+> 버전: v1.2 · 상태: 초안 · 호출: 게임 클라이언트(UE) → 웹서버 · 게임 담당: Robbie · 웹서버 담당: Robbie (리뷰: Sang-Hyun-Kim)
 
 스테이지 플레이가 끝나면(클리어·실패) 게임이 결과를 보내고, 서버가 **검사 → 보상 계산 → 저장 → 진행 반영**을 한 번에 합니다. 같은 플레이의 결과는 **한 번만** 반영합니다. 저장된 결과는 다시 받을 수 있습니다.
 
@@ -88,7 +88,7 @@
 |---|---|---|
 | `result` | object | 저장된 결과(아래 [결과](#결과)). `ALREADY_SAVED`면 **처음 저장된** 결과 |
 | `saveStatus` | string | `SAVED`(이번 요청으로 저장) · `ALREADY_SAVED`(이미 저장돼 있어 처음 결과를 돌려줌, 보상은 다시 주지 않음). **게임은 둘 다 "저장됨"으로 봅니다** |
-| `account` | object | 지금 계정 값([account-api.md](account-api.md#계정-스냅샷), `version` 포함). 확장 칸입니다. 게임은 쓰지 않아도 되고, 메인메뉴 값은 로그인·`GET /accounts/me`로 받습니다 |
+| `account` | object | 지금 계정 값([account-api.md](account-api.md#계정-스냅샷), `version` 포함). `ALREADY_SAVED`여도 처음 값이 아니라 **지금** 값입니다. 게임은 [받는 쪽 규칙](account-api.md#받는-쪽-규칙)에 따라 적용합니다([동기화 시점](account-api.md#동기화-시점) T2) |
 
 - `meta.requestId`는 서버가 만든 요청 번호입니다(응답 헤더 `X-Request-Id`와 같음). 요청 본문의 `requestId`와 다릅니다.
 
@@ -175,3 +175,4 @@ R1의 `data.result`와 R2의 `data`가 같은 모양입니다.
 | v0 | 2026-10-05 | 호출 주체를 게임 클라이언트로 변경(싱글 게임 구조) |
 | v1 | 2026-10-09 | 초안: 결과를 스테이지 플레이 밑으로(R1 `POST`·R2 `GET …/{stagePlayId}/result`, 판 시작은 [stage-play-api.md](stage-play-api.md)로). `saveStatus`(`SAVED`·`ALREADY_SAVED`), 검사 순서(플레이 상태를 보상 전에), 보상(서버 계산, 총 경험치 기준), 플레이 ID로 한 번만 반영, 오류 `STAGE_RESULT_NOT_FOUND` |
 | v1.1 | 2026-10-12 | 게임의 재전송을 README 재전송 규칙으로: 자동 재시도 → 묻기 → 디스크 보관 → 로그인 뒤 재전송(S5). "정할 것"의 보관 재전송 줄 삭제. 서버 동작·칸은 그대로 |
+| v1.2 | 2026-10-13 | M25: 응답 `account`를 게임이 적용함(확장 칸 → 동기화 시점 T2, account-api.md v1.3). `ALREADY_SAVED`의 `account`는 지금 값. 서버 동작·칸은 그대로 |
