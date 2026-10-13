@@ -54,7 +54,7 @@ sequenceDiagram
   IM->>IM: AWS_ROLE_ARN 있음? 없으면 건너뜀
   IM->>IM: ./gradlew build (병합된 결과로 다시 시험)
   IM->>OIDC: 토큰 요청(id-token: write)
-  OIDC-->>IM: 토큰(sub = repo:NBCGameServerCamp09Team01/PW01WebServer:ref:refs/heads/dev)
+  OIDC-->>IM: 토큰(sub = repo:NBCGameServerCamp09Team01@332844827/PW01WebServer@1392474824:ref:refs/heads/dev)
   IM->>STS: AssumeRoleWithWebIdentity(역할 ARN, 토큰)
   STS->>STS: aud = sts.amazonaws.com, sub 조건 확인
   STS-->>IM: 임시 자격 증명(1시간 안쪽)
@@ -70,7 +70,8 @@ sequenceDiagram
   IM->>GH: 실행 요약에 이미지 주소
 ```
 
-- 다른 저장소·브랜치에서 온 토큰이면 2번 단계(STS)가 거절합니다. 액세스 키는 어디에도 없습니다.
+- 다른 저장소·브랜치에서 온 토큰이면 STS 단계에서 거절합니다. 액세스 키는 어디에도 없습니다.
+- `sub`에는 조직·저장소의 **숫자 ID**가 붙습니다(GitHub 불변 주체, 2026-07-15 이후 만든 저장소는 자동). 이름만 적은 옛 모양(`repo:조직/저장소:…`)으로 신뢰 조건을 쓰면 STS가 거절합니다(10/13 첫 실행). 실제 모양은 `GET https://api.github.com/repos/NBCGameServerCamp09Team01/PW01WebServer/actions/oidc/customization/sub`의 `sub_claim_prefix`로 확인합니다.
 - 이미지의 `/actuator/info` `app.commit` = 커밋 해시 = 태그에서 `dev-`를 뺀 값([ops-health.md](ops-health.md) ①).
 - 이미지는 `Dockerfile` 2단계: JDK 21에서 `bootJar` → JRE 21에 jar만, root 아닌 사용자, `.dockerignore`로 `.env*` 제외.
 
@@ -95,4 +96,4 @@ sequenceDiagram
 ## 뒤에 더할 것
 
 - 서버에 띄우기(배포 단계), 상태 확인으로 새 서버를 받는 순서, 되돌리기(이전 커밋 태그로).
-- 배포 승인을 GitHub 환경(environment)으로 하면 역할 신뢰 조건의 `sub`가 `environment:<이름>`으로 바뀝니다.
+- 배포 승인을 GitHub 환경(environment)으로 하면 역할 신뢰 조건의 `sub`가 `repo:NBCGameServerCamp09Team01@332844827/PW01WebServer@1392474824:environment:<이름>` 모양으로 바뀝니다.
