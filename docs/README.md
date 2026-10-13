@@ -15,6 +15,7 @@
 | [contracts/stage-play-api.md](contracts/stage-play-api.md) | 스테이지 플레이 API(시작·진행 중·포기, 이어하기 1차) | 초안 v1.1 |
 | [contracts/examples/](contracts/examples/) | 요청·응답 JSON 예시 | 작성 전 |
 | [flows/play-checkpoint.md](flows/play-checkpoint.md) | 진행 중 스테이지 이어하기 흐름도 | 초안 |
+| [flows/account-snapshot.md](flows/account-snapshot.md) | 계정 스냅샷 동기화 흐름도(원본·사본, 버전, 시점별 적용) | 초안 |
 | 일정 | 마일스톤·마감 | 자리만 (추후 추가) |
 
 ## 다른 곳에 있는 문서
