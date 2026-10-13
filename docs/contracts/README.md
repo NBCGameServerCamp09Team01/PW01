@@ -10,10 +10,10 @@
 | [skill-api.md](skill-api.md) | v1 | 초안 | Robbie | Robbie (리뷰: Sang-Hyun-Kim) |
 | [result-api.md](result-api.md) | v1.1 | 초안 | Robbie | Robbie (리뷰: Sang-Hyun-Kim) |
 | [stage-api.md](stage-api.md) | v1.2 | 초안 | Sang-Hyun-Kim | Sang-Hyun-Kim (리뷰: Robbie) |
-| [stage-play-api.md](stage-play-api.md) | v1.1 | 초안 | Robbie | Sang-Hyun-Kim (리뷰: Robbie) |
+| [stage-play-api.md](stage-play-api.md) | v1.2 | 초안 | Robbie | Sang-Hyun-Kim (리뷰: Robbie) |
 | [realtime-api.md](realtime-api.md) | v1.1 | 초안 | Juunnmmoo | Juunnmmoo (리뷰: Sang-Hyun-Kim 배정) |
 | [ranking-api.md](ranking-api.md) | v1 | 초안 | Sang-Hyun-Kim | Sang-Hyun-Kim (리뷰: Robbie) |
-| [redis-keys.md](redis-keys.md) | v1.3 | 합의(v1.3 랭킹 절 초안) | — | Sang-Hyun-Kim (리뷰: Robbie) |
+| [redis-keys.md](redis-keys.md) | v1.4 | 합의(v1.3 랭킹 절·v1.4 체크포인트 키 초안) | — | Sang-Hyun-Kim (리뷰: Robbie) |
 
 - 상태: `작성 전` → `초안` → `합의` → `구현됨`
 - 요청·응답 JSON 예시는 [examples/](examples/) 에 둡니다.
@@ -100,7 +100,7 @@
 | 다시 보내지 않는 경우 | `401`(로그인 상태를 끝냄, [auth-api.md](auth-api.md#인증-확인-순서와-실패-코드)), `429`(`retryAfterSeconds`가 지난 뒤 사용자가 다시 시도), 나머지 4xx |
 | 횟수·간격 | 게임 설정 값(UE `DefaultGame.ini`의 `[/Script/ProjectWarrior.WarriorApiSettings]`). 기본: 서버 장애(`retryable: true`·5xx)는 자동 2번(1초, 3초 뒤), 응답이 없으면(서버 꺼짐) 자동 재시도 없이 → 플레이어에게 "다시 시도 / 게임 종료"를 한 번 묻습니다 |
 | 보관 | 상태 변경 요청이 처음 실패하면 게임이 **계정별로 디스크에 보관**합니다(그 뒤 성공하면 지움). 묻기 뒤에도 실패하면 "게임을 종료합니다"를 안내하고 끝냅니다. 그 계정이 다시 로그인하면 같은 `requestId`·같은 본문으로 다시 보냅니다. 토큰은 보관하지 않습니다 |
-| 보관 대상 | 지금은 결과 제출([result-api.md R1](result-api.md#r1-결과-제출--post-accountsmestage-playsstageplayidresult))만. 스테이지 플레이 시작·포기는 보관하지 않습니다(남은 진행 중 플레이는 다음 시작의 409 처리가 정리) |
+| 보관 대상 | 지금은 결과 제출([result-api.md R1](result-api.md#r1-결과-제출--post-accountsmestage-playsstageplayidresult))만. 스테이지 플레이 시작·포기·체크포인트 저장은 보관하지 않습니다(남은 진행 중 플레이는 다음 시작의 409 처리가 정리, 체크포인트는 다음 웨이브 클리어 때 새로 올림) |
 | 보관 유효 기간 | 결과 제출: 스테이지 플레이 마감(`expiresAt`, 시작 + 24시간)까지. 그 밖의 종류: 보관한 뒤 24시간(게임 설정 값). 지난 보관본은 보내지 않고 지웁니다 |
 | 오래된 요청 | 서버는 기능별 코드로 거절합니다(결과: `STAGE_PLAY_EXPIRED`). 새 공통 코드는 두지 않습니다. 게임은 `retryable: false` 거절을 받으면 보관본을 지우고 이유를 보입니다 |
 | 한 번만 반영 | 서버가 맡습니다. API별 방법은 아래 "API별 한 번만 반영하는 방법" 표 |
@@ -136,6 +136,7 @@
 |---|---|---|
 | 스테이지 플레이 시작 | DB: 계정 + 시작 `requestId` | [stage-play-api.md](stage-play-api.md) |
 | 결과 제출 | DB: 플레이 ID(한 플레이에 결과 하나) | [result-api.md](result-api.md) |
+| 체크포인트 저장(C1) | Redis: 플레이당 하나를 덮어씀 + `clearedWave`가 뒤로 가지 않음. `requestId` 없음(같은 요청이 다시 와도 결과가 같음) | [stage-play-api.md C1](stage-play-api.md#c1-저장--put-accountsmestage-playsstageplayidcheckpoint) |
 | 스탯 투자 | Redis 처음 응답 + DB 변경 내역 | [stat-api.md](stat-api.md) "한 번만 반영" |
 | 스킬 해금 | 스탯 투자와 같은 방법(DB 마지막 방어: 계정 + 스킬 한 줄) | [skill-api.md](skill-api.md) "한 번만 반영" |
 | 우편함(나중) | 스탯 투자와 같은 방법 | 그 명세 |
