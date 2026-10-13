@@ -12,7 +12,9 @@
 | [contracts/skill-api.md](contracts/skill-api.md) | 스킬 해금 API(해금, 서버 진행도) | 초안 v1 |
 | [contracts/redis-keys.md](contracts/redis-keys.md) | Redis 키 규칙 | 작성 전 |
 | [contracts/ranking-api.md](contracts/ranking-api.md) | 랭킹 API(스테이지·지역 총합·전체 총합·진행 순위, 전체·주간) | 초안 v1 |
+| [contracts/stage-play-api.md](contracts/stage-play-api.md) | 스테이지 플레이 API(시작·진행 중·포기, 이어하기 1차) | 초안 v1.1 |
 | [contracts/examples/](contracts/examples/) | 요청·응답 JSON 예시 | 작성 전 |
+| [flows/play-checkpoint.md](flows/play-checkpoint.md) | 진행 중 스테이지 이어하기 흐름도 | 초안 |
 | 일정 | 마일스톤·마감 | 자리만 (추후 추가) |
 
 ## 다른 곳에 있는 문서

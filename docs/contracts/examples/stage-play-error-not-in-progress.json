@@ -1,0 +1,6 @@
+{
+  "code": "STAGE_PLAY_NOT_IN_PROGRESS",
+  "message": "이미 끝난 스테이지 플레이입니다.",
+  "path": "/accounts/me/stage-plays/3f2b8c1e-7a4d-4e2f-9b10-6c5d4e3f2a1b/abandon",
+  "retryable": false
+}
