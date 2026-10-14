@@ -1,6 +1,6 @@
 # Redis 키 규칙
 
-> 버전: v1.3 · 상태: 합의(v1.3 랭킹 절은 초안, PR 리뷰 전) · 사용: PW01WebServer · 담당: Sang-Hyun-Kim · 리뷰: Robbie
+> 버전: v1.4 · 상태: 합의(v1.3 랭킹 절·v1.4 체크포인트 절은 초안, PR 리뷰 전) · 사용: PW01WebServer · 담당: Sang-Hyun-Kim · 리뷰: Robbie
 
 웹서버가 Redis에 쓰는 키의 이름·타입·만료 규칙입니다. 새 키를 쓰기 전에 여기에 먼저 추가합니다.
 
@@ -73,6 +73,7 @@ v1.2는 상태를 바꾸는 요청의 중복 방지 키(S3 투자부터)를 더�
 | 잠김 시간 | 1분(잠긴 때부터) | `pw01.auth.login-fail.lock=1m` | `PW01_AUTH_LOGINFAIL_LOCK` |
 | 중복 방지: 처음 응답을 기억하는 시간 | 24시간 | `pw01.idempotency.ttl=24h` | `PW01_IDEMPOTENCY_TTL` |
 | 중복 방지: 처리 중 표시 시간 | 30초. 서버가 처리 중에 죽어도 이 시간이 지나면 풀린다 | `pw01.idempotency.in-progress-ttl=30s` | `PW01_IDEMPOTENCY_INPROGRESSTTL` |
+| 체크포인트 `state` 최대 크기(v1.4) | 64KB. 넘으면 C1이 400 | `pw01.play-checkpoint.max-state-size=64KB` | `PW01_PLAYCHECKPOINT_MAXSTATESIZE` |
 
 - 시간은 초 단위여야 합니다(Redis `EXPIRE`가 초 단위). 1초보다 짧거나 초 아래 값이 있으면 서버가 뜨지 않습니다.
 
@@ -91,6 +92,7 @@ v1.2는 상태를 바꾸는 요청의 중복 방지 키(S3 투자부터)를 더�
 | `pw01:account-session:<계정 ID>` | String | 세션 키와 함께 늘림 | 계정의 지금 세션(계정당 1개, 새 로그인이 이김) | 지금 토큰 해시(문자열) | 로그인 때 덮어씀, 요청마다 비교·연장, 로그아웃 때 조건부 삭제, 제재 때 삭제 | 503 |
 | `pw01:login-fail:<아이디>` | String(정수) | 첫 실패 때 실패를 세는 시간, 허용 횟수에 닿으면 잠김 시간으로 다시 | 로그인 실패 횟수 | 실패 횟수(정수) | 로그인 전 확인, 실패 때 증가, 성공 때 삭제 | 503 |
 | `pw01:idem:<계정 ID>:<requestId>` | String(JSON 문자열) | 처리 중: 처리 중 표시 시간 / 끝남: 기억 시간 | 상태를 바꾸는 요청을 한 번만 실행하고, 다시 오면 처음 응답을 돌려줌 | `{"state":"IN_PROGRESS"\|"DONE","bodyHash":"<본문 SHA-256>","body":"<처음 응답 data의 JSON 문자열, 처리 중이면 null>"}` | 스탯 투자(S3), 스킬 해금(S4), 우편함(나중). Service가 `IdempotencyService.run(...)`으로 부름 | 503 |
+| `pw01:play-checkpoint:<stagePlayId>` | String(JSON 문자열) | 플레이 마감(`expiresAt`)까지. 저장할 때마다 남은 시간으로 다시 | 진행 중인 플레이의 마지막 체크포인트(v1.4, [아래](#플레이-체크포인트v14)) | `{"accountId":"1","clearedWave":2,"contentVersion":1,"elapsedSeconds":96.4,"savedAt":"…Z","state":{…}}` | C1 저장(덮어씀), C2 읽음, 결과 저장·포기·만료 때 삭제 | 503(C1·C2). 삭제 실패는 무시(마감 때 사라짐) |
 
 - `<아이디>`는 **입력 그대로**입니다. 아이디는 대소문자를 구분하므로(`Warrior01`과 `warrior01`은 다른 계정) 소문자로 맞추지 않습니다. 맞추면 서로 다른 계정이 잠김을 같이 씁니다.
 - 아이디 형식(영문 대소문자·숫자 4~20자)에 맞지 않는 로그인은 실패 키를 만들지 않습니다(키 길이를 묶음).
@@ -98,7 +100,7 @@ v1.2는 상태를 바꾸는 요청의 중복 방지 키(S3 투자부터)를 더�
 - 크기(Redis 7.4, `MEMORY USAGE`): 세션 키 136바이트, 계정 세션 키 144바이트.
 - `pw01:idem`: `<requestId>`는 소문자 UUID입니다. 키에 기능 이름을 넣지 않습니다(10/12 확인). 다른 API에 같은 `requestId`를 쓰면 본문 해시가 달라 409 `IDEMPOTENCY_KEY_REUSED`입니다. 계정 ID를 넣는 것은 남의 `requestId`로 남의 처음 응답을 받지 못하게 하려는 것입니다.
 - `pw01:idem`: 본문 해시는 서버가 요청 DTO를 다시 JSON으로 쓴 문자열의 해시입니다(칸 순서·공백이 달라도 같은 요청). 토큰·비밀번호는 값에 넣지 않고, 인증 API에는 쓰지 않습니다.
-- `pw01:idem`: 스테이지 플레이 시작·결과 제출에는 쓰지 않습니다. 둘은 DB(시작 `requestId`, 플레이 ID)로 이미 한 번만 반영됩니다.
+- `pw01:idem`: 스테이지 플레이 시작·결과 제출에는 쓰지 않습니다. 둘은 DB(시작 `requestId`, 플레이 ID)로 이미 한 번만 반영됩니다. 체크포인트 저장(C1)에도 쓰지 않습니다(덮어쓰기라 다시 와도 결과가 같음).
 - 앞으로 더할 키(그 기능에서 이 표에 먼저 적음): 접속 상태·알림 채널, 속도 제한.
 
 ## 명령 순서(첫 흐름)
@@ -210,6 +212,41 @@ if count == max then
 end
 return {count, redis.call('TTL', KEYS[1])}
 ```
+
+## 플레이 체크포인트(v1.4)
+
+진행 중인 스테이지 플레이의 판 안 값([stage-play-api.md C1·C2](stage-play-api.md#c1c2-체크포인트)). 플레이당 키 하나를 덮어씁니다.
+
+- 키에 계정 ID를 넣지 않습니다. 주인 확인은 MySQL `stage_play`로 먼저 하고(남의 플레이는 404), 값의 `accountId`는 점검용입니다.
+- 만료는 플레이 마감까지 남은 초(올림, 최소 1초)입니다. 결과 저장·포기·만료 처리 때 `DEL`합니다. MySQL 트랜잭션이 커밋된 뒤에 지우고, 실패해도 결과·포기 응답은 바꾸지 않습니다.
+- 크기: `state`는 설정 최대 크기(처음 64KB) 이하. 지금 게임의 체크포인트는 약 2KB입니다.
+
+### 명령 순서(체크포인트)
+
+| API | 순서 |
+|---|---|
+| C1 저장 | MySQL로 내 플레이·진행 중·마감 확인 → 요청 값 검사 → `play_checkpoint_put.lua`(비교와 저장을 한 번에) → -1이면 409 `CHECKPOINT_OUT_OF_ORDER` |
+| C2 받기 | MySQL로 내 플레이 확인 → `GET` → 없으면 204 |
+| 판 끝(R1·P4·만료) | 커밋 뒤 `DEL pw01:play-checkpoint:<stagePlayId>` |
+
+### play_checkpoint_put.lua
+
+```lua
+-- KEYS[1] = pw01:play-checkpoint:<stagePlayId>
+-- ARGV[1] = 새 clearedWave(정수), ARGV[2] = 저장할 JSON 문자열, ARGV[3] = 만료(초)
+-- 돌려줌: 1 = 저장함, -1 = 저장된 clearedWave보다 작음(저장 안 함)
+local current = redis.call('GET', KEYS[1])
+if current then
+  local saved = cjson.decode(current)
+  if tonumber(saved.clearedWave) > tonumber(ARGV[1]) then
+    return -1
+  end
+end
+redis.call('SET', KEYS[1], ARGV[2], 'EX', tonumber(ARGV[3]))
+return 1
+```
+
+- 같은 `clearedWave`는 덮어씁니다(같은 요청을 다시 보낸 경우).
 
 ## 랭킹(v1.3)
 
@@ -478,3 +515,4 @@ return 1
 | v1 | 2026-10-07 | 첫 흐름 키 3개(세션·계정 세션·로그인 실패), Redis 접근 규칙, 설정 값(세션 10분·요청마다 연장, 1분 안에 5번 실패하면 1분 잠김, 모두 설정으로 바꿈), 명령 순서, Lua 4개 |
 | v1.1 | 2026-10-07 | 인증 방식 결정 기록 추가(불투명 토큰 + Redis 세션, HandlerInterceptor, 이유·대가·다시 볼 때). 키·스크립트는 바뀌지 않음 |
 | v1.3 | 2026-10-12 | 랭킹 절: 보드 이름(스테이지·지역·전체 총합 × 난이도 × 전체·주간, 진행), ZSet 점수 = −보드 점수, 멤버 = 달성 ms + 기록 순번 + 계정 ID + 상세, 키(ZSet + 계정 → 멤버 해시, 임시 보드, 다시 채우기 잠금), 설정 5개(전체 보드 30일, 주간 보관 14일, 잠금 30초, 임시 보드 60초, 묶음 500), 명령 순서(커밋 뒤 갱신, 실패 표시, 다시 채우기, 부분 장애 때 MySQL), Lua 6개, 유의사항. v1.2(중복 방지 키, `docs/s3-stat-api`) 다음 판 |
+| v1.4 | 2026-10-13 | 플레이 체크포인트 절: 키 `pw01:play-checkpoint:<stagePlayId>`(String JSON, 만료 = 플레이 마감), 설정 `state` 최대 크기 64KB, 명령 순서(C1 비교·저장 한 번에, C2 읽기, 판 끝 때 커밋 뒤 삭제), Lua `play_checkpoint_put.lua` |

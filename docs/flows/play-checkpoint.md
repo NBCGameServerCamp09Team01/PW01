@@ -1,8 +1,10 @@
-# 플레이 체크포인트 흐름 (M22 1차: 진행 중 스테이지 이어하기)
+# 플레이 체크포인트 흐름 (M22: 진행 중 스테이지 이어하기)
 
-> 상태: 초안 · 명세: [stage-play-api.md 이어하기(1차)](../contracts/stage-play-api.md#이어하기1차) · 재전송: [README.md 재전송 규칙](../contracts/README.md#재전송-규칙)
+> 상태: 초안 · 명세: [stage-play-api.md 이어하기](../contracts/stage-play-api.md#이어하기), [C1·C2 체크포인트](../contracts/stage-play-api.md#c1c2-체크포인트) · Redis: [redis-keys.md 플레이 체크포인트](../contracts/redis-keys.md#플레이-체크포인트v14) · 재전송: [README.md 재전송 규칙](../contracts/README.md#재전송-규칙)
 
-판 도중 게임이 꺼지거나 로그인 상태가 끝난 뒤 다시 로그인했을 때의 흐름입니다. 1차는 **같은 `stagePlayId`로 그 스테이지를 처음(1웨이브)부터** 다시 합니다. 서버 API는 바뀌지 않습니다.
+판 도중 게임이 꺼지거나 로그인 상태가 끝난 뒤 다시 로그인했을 때의 흐름입니다. 이어하기는 **같은 `stagePlayId`**로 합니다.
+- ①~⑤ 1차(구현됨): 체크포인트 없이 **처음(1웨이브)부터**
+- ⑥·⑦ 최종(명세 v1.2, 구현 중): 웨이브를 클리어할 때마다 체크포인트를 올리고, 이어할 때 **클리어한 웨이브 다음의 쉬는 시간부터** 그 판 안 값으로
 
 ## 참여자
 
@@ -16,6 +18,8 @@
 | `AWarriorFrontPlayerController` | 게임 `Controllers/` | 메인메뉴, 이어하기 팝업 |
 | `AWarriorStageGameMode` | 게임 `GameModes/` | `BeginRun`(플레이 시작), `FinishRun`(결과) |
 | `StagePlayController` | 웹서버 `stageplay/` | `/accounts/me/stage-plays` |
+| `WarriorPlayCheckpoint` | 게임 `Stage/` | 판 안 값 꺼내기(`Capture`)·넣기(`Restore`) (⑥⑦) |
+| 체크포인트 API·Redis | 웹서버 `stageplay/`, Redis `pw01:play-checkpoint:` | C1 저장·C2 받기, 판이 끝나면 삭제 (⑥⑦) |
 
 ## ① 판 도중 강제 종료 → 다시 로그인 → 이어하기
 
@@ -151,6 +155,75 @@ sequenceDiagram
   CP-->>FPC: None → 메인메뉴
 ```
 
-## 다음 단계(최종 완성)에서 더할 흐름
+## ⑥ 웨이브 클리어 → 체크포인트 올리기
 
-- ⑥ 웨이브 경계마다 `PUT /accounts/me/stage-plays/{id}/checkpoint`로 판 안 값을 올리고, 이어하기 때 `GET …/checkpoint`로 받아 그 웨이브부터 시작합니다.
+마지막 웨이브가 아니면 클리어할 때마다 올립니다. 실패해도 판은 계속되고 디스크에 보관하지 않습니다(다음 웨이브 클리어 때 새로 올림).
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant GM as AWarriorStageGameMode
+  participant CPL as WarriorPlayCheckpoint
+  participant CP as UWarriorPlayCheckpointSubsystem
+  participant SP as UWarriorStagePlaySubsystem
+  participant WS as 웹서버 StagePlayController
+  participant R as Redis
+
+  Note over GM: 웨이브 N 클리어(WaveCleared, 보상 반영 뒤). N < 전체 웨이브
+  GM->>CPL: Capture
+  CPL-->>GM: 판 안 값(골드·아이템·강화·체력·통계·시간)
+  GM->>CP: 체크포인트 올리기
+  CP->>SP: C1
+  SP->>WS: PUT /accounts/me/stage-plays/{id}/checkpoint {contentVersion, clearedWave: N, elapsedSeconds, state}
+  WS->>WS: 내 플레이·진행 중·마감·값 검사
+  WS->>R: play_checkpoint_put.lua (저장된 clearedWave ≤ N 이면 SET, 만료 = 마감)
+  alt 저장함
+    R-->>WS: 1
+    WS-->>SP: 200 {clearedWave: N, savedAt}
+  else 뒤로 감
+    R-->>WS: -1
+    WS-->>SP: 409 CHECKPOINT_OUT_OF_ORDER
+  else 연결 실패·5xx
+    WS-->>SP: 실패
+  end
+  Note over GM: 결과와 관계없이 쉬는 시간 → 웨이브 N+1 진행
+```
+
+## ⑦ 판 도중 강제 종료 → 다시 로그인 → 체크포인트에서 이어하기
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant FPC as AWarriorFrontPlayerController
+  participant CP as UWarriorPlayCheckpointSubsystem
+  participant SP as UWarriorStagePlaySubsystem
+  participant SL as UWarriorStageLaunchSubsystem
+  participant GM as AWarriorStageGameMode
+  participant CPL as WarriorPlayCheckpoint
+  participant WS as 웹서버
+
+  Note over GM,WS: 웨이브 2 클리어(체크포인트 저장) → 웨이브 3 도중 강제 종료
+  Note over CP: 로그인 → 재전송 끝(①과 같음)
+  CP->>SP: RequestCurrentStagePlay
+  SP->>WS: GET /accounts/me/stage-plays/current
+  WS-->>SP: 200 IN_PROGRESS
+  CP->>SP: 체크포인트 받기
+  SP->>WS: GET /accounts/me/stage-plays/{id}/checkpoint
+  alt 200이고 contentVersion이 같음
+    WS-->>SP: 200 {clearedWave: 2, state}
+    CP-->>FPC: Resumable(체크포인트)
+    FPC->>FPC: 팝업 "3웨이브부터 이어서 합니다 · 골드 · 체력"
+  else 204 · 버전 다름 · 실패
+    CP-->>FPC: Resumable(처음부터)
+    FPC->>FPC: 팝업 "처음(1웨이브)부터 다시 시작합니다"
+  end
+  FPC->>CP: Resume (이어하기)
+  CP->>SL: SelectStageForResume(stageId, ResumeInfo{stagePlayId, Checkpoint})
+  CP->>FPC: 레벨 열기
+  GM->>SL: ConsumeResumeInfo (BeginRun)
+  GM->>CPL: Restore(강화 → GAS 현재값 → 인벤토리 → 판 통계)
+  GM->>GM: CurrentWaveIndex = 2 - 1, 웨이브 표시 2/5
+  GM->>SP: StartStagePlay(stageId, &ResumeInfo) (P1 없음, 같은 ID)
+  Note over GM: Initializing → Resting(준비 시간 대신) → 웨이브 3
+  Note over GM: 결과 playTimeSeconds = elapsedSeconds + 이어한 뒤 시간
+```

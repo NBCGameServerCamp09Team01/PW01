@@ -1,0 +1,26 @@
+{
+  "contentVersion": 1,
+  "clearedWave": 2,
+  "elapsedSeconds": 96.4,
+  "state": {
+    "gold": 295,
+    "items": [
+      { "itemPath": "/Game/MyGameContents/Item/DA_Potion_Small.DA_Potion_Small", "quantity": 3 }
+    ],
+    "upgrades": [
+      { "upgradeId": { "tagName": "Upgrade.Stage.MaxHealth" }, "upgradePath": "/Game/MyGameContents/Upgrade/DA_Upgrade_MaxHealth.DA_Upgrade_MaxHealth", "level": 1 },
+      { "upgradeId": { "tagName": "Upgrade.Stage.AttackPower" }, "upgradePath": "/Game/MyGameContents/Upgrade/DA_Upgrade_AttackPower.DA_Upgrade_AttackPower", "level": 1 }
+    ],
+    "attributes": { "currentHealth": 84, "currentStamina": 50, "currentBalance": 1 },
+    "stageTimeSeconds": 96.4,
+    "stageRecord": {
+      "wavesCleared": 2,
+      "totalWaves": 5,
+      "stats": { "playTimeSeconds": 96.4 },
+      "waves": [
+        { "waveNumber": 1, "bBossWave": false, "startTimeSeconds": 10.4, "clearTimeSeconds": 41.2, "bCleared": true },
+        { "waveNumber": 2, "bBossWave": false, "startTimeSeconds": 61.2, "clearTimeSeconds": 96.4, "bCleared": true }
+      ]
+    }
+  }
+}
