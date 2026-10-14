@@ -5,6 +5,126 @@
     "stageId": "stage.01.01",
     "difficulty": 0,
     "waveCount": 5,
+    "waveVersion": "w1-m1",
+    "waves": [
+      {
+        "waveNumber": 1,
+        "restSeconds": 0,
+        "bossWave": false,
+        "goldChanceMultiplier": 1.0,
+        "goldAmountMultiplier": 1.0,
+        "enemies": [
+          {
+            "monsterId": "monster.samurai",
+            "count": 2,
+            "boss": false,
+            "spawnGroup": null,
+            "goldReward": 3,
+            "goldDropChance": 1.0
+          }
+        ]
+      },
+      {
+        "waveNumber": 2,
+        "restSeconds": 0,
+        "bossWave": false,
+        "goldChanceMultiplier": 1.0,
+        "goldAmountMultiplier": 1.0,
+        "enemies": [
+          {
+            "monsterId": "monster.samurai",
+            "count": 3,
+            "boss": false,
+            "spawnGroup": null,
+            "goldReward": 2,
+            "goldDropChance": 1.0
+          }
+        ]
+      },
+      {
+        "waveNumber": 3,
+        "restSeconds": 0,
+        "bossWave": false,
+        "goldChanceMultiplier": 1.0,
+        "goldAmountMultiplier": 1.0,
+        "enemies": [
+          {
+            "monsterId": "monster.samurai",
+            "count": 3,
+            "boss": false,
+            "spawnGroup": null,
+            "goldReward": 2,
+            "goldDropChance": 1.0
+          },
+          {
+            "monsterId": "monster.archer",
+            "count": 1,
+            "boss": false,
+            "spawnGroup": null,
+            "goldReward": 3,
+            "goldDropChance": 1.0
+          }
+        ]
+      },
+      {
+        "waveNumber": 4,
+        "restSeconds": 0,
+        "bossWave": false,
+        "goldChanceMultiplier": 1.0,
+        "goldAmountMultiplier": 1.0,
+        "enemies": [
+          {
+            "monsterId": "monster.samurai",
+            "count": 5,
+            "boss": false,
+            "spawnGroup": null,
+            "goldReward": 0,
+            "goldDropChance": 1.0
+          },
+          {
+            "monsterId": "monster.archer",
+            "count": 2,
+            "boss": false,
+            "spawnGroup": null,
+            "goldReward": 0,
+            "goldDropChance": 1.0
+          }
+        ]
+      },
+      {
+        "waveNumber": 5,
+        "restSeconds": 0,
+        "bossWave": true,
+        "goldChanceMultiplier": 1.0,
+        "goldAmountMultiplier": 1.0,
+        "enemies": [
+          {
+            "monsterId": "monster.boss.warrior",
+            "count": 1,
+            "boss": true,
+            "spawnGroup": null,
+            "goldReward": 0,
+            "goldDropChance": 1.0
+          },
+          {
+            "monsterId": "monster.samurai",
+            "count": 2,
+            "boss": false,
+            "spawnGroup": null,
+            "goldReward": 0,
+            "goldDropChance": 1.0
+          },
+          {
+            "monsterId": "monster.archer",
+            "count": 1,
+            "boss": false,
+            "spawnGroup": null,
+            "goldReward": 0,
+            "goldDropChance": 1.0
+          }
+        ]
+      }
+    ],
     "status": "IN_PROGRESS",
     "endReason": null,
     "startedAt": "2026-10-09T03:00:00.123Z",
