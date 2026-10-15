@@ -1,6 +1,6 @@
 # Redis 키 규칙
 
-> 버전: v1.4 · 상태: 합의(v1.3 랭킹 절·v1.4 체크포인트 절은 초안, PR 리뷰 전) · 사용: PW01WebServer · 담당: Sang-Hyun-Kim · 리뷰: Robbie
+> 버전: v1.5 · 상태: 합의(v1.3 랭킹 절·v1.4 체크포인트 절·v1.5 서버 사이 전달 절은 초안, PR 리뷰 전) · 사용: PW01WebServer · 담당: Sang-Hyun-Kim · 리뷰: Robbie
 
 웹서버가 Redis에 쓰는 키의 이름·타입·만료 규칙입니다. 새 키를 쓰기 전에 여기에 먼저 추가합니다.
 
@@ -56,6 +56,7 @@ v1.2는 상태를 바꾸는 요청의 중복 방지 키(S3 투자부터)를 더�
 | 문자열·정수 | `StringRedisTemplate`(Spring Boot 기본 빈) | 첫 흐름 키 셋 전부, Lua 스크립트 인자 |
 | 객체(JSON) | `jsonRedisTemplate`(`RedisTemplate<String, Object>`, 값은 JSON 직렬화기) | 아직 쓰는 키 없음 |
 | JSON 문자열 | `StringRedisTemplate` + 서버의 `JsonMapper`로 직접 쓰고 읽음 | `pw01:idem`(중복 방지) |
+| Pub/Sub 메시지(JSON 문자열) | 보내기: `StringRedisTemplate.convertAndSend(채널, 문자열)` / 받기: `RedisMessageListenerContainer`(전용 구독 연결) | `pw01:realtime-relay:*`(v1.5, [아래](#실시간-서버-사이-전달v15)) |
 
 - Lua 스크립트에 넘기는 키·인자는 문자열 직렬화기를 거쳐야 합니다. JSON 직렬화기를 거치면 `600`이 `"600"`이 되어 `EXPIRE`가 실패합니다.
 - 새 키를 표에 더할 때 "값 모양" 칸에 어느 쪽인지 적습니다.
@@ -101,7 +102,7 @@ v1.2는 상태를 바꾸는 요청의 중복 방지 키(S3 투자부터)를 더�
 - `pw01:idem`: `<requestId>`는 소문자 UUID입니다. 키에 기능 이름을 넣지 않습니다(10/12 확인). 다른 API에 같은 `requestId`를 쓰면 본문 해시가 달라 409 `IDEMPOTENCY_KEY_REUSED`입니다. 계정 ID를 넣는 것은 남의 `requestId`로 남의 처음 응답을 받지 못하게 하려는 것입니다.
 - `pw01:idem`: 본문 해시는 서버가 요청 DTO를 다시 JSON으로 쓴 문자열의 해시입니다(칸 순서·공백이 달라도 같은 요청). 토큰·비밀번호는 값에 넣지 않고, 인증 API에는 쓰지 않습니다.
 - `pw01:idem`: 스테이지 플레이 시작·결과 제출에는 쓰지 않습니다. 둘은 DB(시작 `requestId`, 플레이 ID)로 이미 한 번만 반영됩니다. 체크포인트 저장(C1)에도 쓰지 않습니다(덮어쓰기라 다시 와도 결과가 같음).
-- 앞으로 더할 키(그 기능에서 이 표에 먼저 적음): 접속 상태·알림 채널, 속도 제한.
+- 앞으로 더할 키(그 기능에서 이 표에 먼저 적음): 접속 상태, 속도 제한. M23 채팅·길드 키는 각 담당이 `## 채팅`·`## 길드` 절을 만들어 적습니다(예정 이름: 채팅 횟수 제한 `pw01:chat-rate:<계정 ID>`, 길드 소속 캐시 `pw01:guild-members:<길드 ID>`, 길드 채팅 최신 묶음 캐시 `pw01:guild-chat-recent:<길드 ID>`, 접속 상태 `pw01:presence:…`). 서버 사이 전달 채널은 키가 아니므로 이 표에 넣지 않고 [실시간 서버 사이 전달](#실시간-서버-사이-전달v15) 절에 둡니다.
 
 ## 명령 순서(첫 흐름)
 
@@ -498,13 +499,72 @@ redis.call('DEL', KEYS[5])
 return 1
 ```
 
+## 실시간 서버 사이 전달(v1.5)
+
+웹서버가 여러 대(로드 밸런서 뒤)일 때 실시간 알림을 받는 사람이 붙은 서버까지 넘기는 Pub/Sub 채널입니다([realtime-api.md 서버 여러 대](realtime-api.md#서버-여러-대), 흐름 [docs/flows/realtime-relay.md](../flows/realtime-relay.md)). **키가 아니므로** 값·TTL이 없고 `SCAN`에 보이지 않습니다. 다른 기능은 채널을 직접 쓰지 않고 웹서버 `RealtimeNotifier`의 보내기 입구만 부릅니다.
+
+### 채널
+
+| 채널 | 실리는 것 | 서버가 듣는 법 | 받은 서버가 하는 일 |
+|---|---|---|---|
+| `pw01:realtime-relay:global` | 접속한 모두에게 갈 메시지(전체 채팅) | `SUBSCRIBE` | 자기 연결 모두에게 보냄 |
+| `pw01:realtime-relay:guild:<길드 ID>` | **그 길드 하나**의 메시지(길드 채팅·길드 알림·길드원 접속 표시). 길드마다 채널 하나 | 패턴 하나 `PSUBSCRIBE pw01:realtime-relay:guild:*` | 메시지의 계정 목록 중 자기에게 붙은 사람에게만 |
+| `pw01:realtime-relay:target` | 계정을 지정한 메시지(한 사람·여러 사람)와 세션 다시 확인(`SESSION_CHECK`) | `SUBSCRIBE` | 목록 중 자기에게 붙은 사람에게만 |
+
+- 모든 서버가 세 가지를 모두 듣습니다. 길드 채널은 패턴 하나로 들으므로 길드가 생기고 없어져도 구독을 바꾸지 않습니다. 패턴으로 듣는 채널은 `PUBSUB CHANNELS`에 나오지 않고 `PUBSUB NUMPAT`에 셈으로만 나옵니다.
+- 보낸 서버는 자기 연결에는 채널을 거치지 않고 바로 보내고, 채널에서 돌아온 자기 메시지(`origin`이 자기)는 버립니다.
+
+### 메시지 모양(JSON 문자열)
+
+```json
+{
+  "v": 1,
+  "kind": "DELIVER",
+  "origin": "a1b2c3d4",
+  "guildId": "7",
+  "accountIds": ["12", "57"],
+  "message": { "type": "CHAT_MESSAGE", "id": "…", "sentAt": "…Z", "data": {} }
+}
+```
+
+| 칸 | 값 | 설명 |
+|---|---|---|
+| `v` | `1` | 모양 판. 모르는 판은 버리고 경고 로그를 남깁니다(배포 중 옛·새 서버가 섞일 때) |
+| `kind` | `DELIVER` / `SESSION_CHECK` | 게임에 보내기 / 그 계정 연결의 세션을 Pong 때와 같은 판정으로 다시 확인(다른 곳 로그인이면 `4001`) |
+| `origin` | 문자열 | 보낸 서버 번호(서버가 뜰 때 정하는 임의 값). 자기 메시지를 알아보고 로그에서 서버를 가릅니다 |
+| `guildId` | 문자열 | 길드 채널만. 채널 이름의 길드와 다르면 버립니다 |
+| `accountIds` | 문자열 배열 | 길드·지정 채널만. 받을 계정(ID는 문자열 — 공통 규칙) |
+| `message` | 실시간 메시지 그대로 | [realtime-api.md 메시지](realtime-api.md#메시지). `SESSION_CHECK`이면 없음 |
+
+- 받는 서버는 **모르는 칸을 무시**하고 읽습니다(새 서버가 칸을 더해도 옛 서버가 깨지지 않게). 깨진 메시지·한도 초과는 버리고 경고 로그(메시지 `id`만, `data`는 찍지 않음).
+- 한도: 메시지 8KB, 계정 목록 500개(설정 `pw01.realtime.relay.max-message-bytes`·`max-targets`).
+
+### 성질과 장애
+
+- **놓칠 수 있음**: Pub/Sub은 그 순간 듣고 있는 서버에만 갑니다. Redis와의 구독 연결이 끊긴 동안의 메시지는 사라지고, 연결이 돌아오면 다시 구독합니다(기본 5초 간격). 놓친 길드 채팅은 게임이 내역을 다시 불러와 채웁니다.
+- 구독은 평소 명령이 쓰는 연결과 다른 **전용 연결**을 씁니다(구독 중인 연결은 다른 명령을 못 함).
+- 보내기가 실패해도(Redis 장애) 부른 기능에 예외를 던지지 않습니다. 같은 서버 사람에게는 이미 보냈고, 경고 로그만 남깁니다.
+- 받기는 서버마다 스레드 하나로 처리합니다(한 서버에서 온 메시지 순서를 지키려고). 다른 서버에서 온 메시지끼리의 순서는 보장하지 않습니다.
+- 클러스터 모드를 켜면(지금은 끔) 샤드 Pub/Sub(`SPUBLISH`/`SSUBSCRIBE`)으로 바꿔야 하고, 샤드 Pub/Sub에는 패턴 구독이 없으므로 길드 채널은 "자기에게 붙은 길드원의 길드만 구독"으로 바꿉니다(채널 이름·메시지 모양은 그대로).
+
+### 설정 값
+
+| 값 | 기본값 | 설정 이름 |
+|---|---|---|
+| 서버 사이 전달 켜기 | 켬(끄면 자기 연결에만) | `pw01.realtime.relay.enabled=true` |
+| 전체 채널 | `pw01:realtime-relay:global` | `pw01.realtime.relay.global-channel` |
+| 길드 채널 앞부분 | `pw01:realtime-relay:guild:` | `pw01.realtime.relay.guild-channel-prefix` |
+| 지정 채널 | `pw01:realtime-relay:target` | `pw01.realtime.relay.target-channel` |
+| 메시지 최대 크기 | 8KB | `pw01.realtime.relay.max-message-bytes=8192` |
+| 계정 목록 최대 | 500 | `pw01.realtime.relay.max-targets=500` |
+
 ## 정할 것
 
 | 무엇 | 지금 | 누가 |
 |---|---|---|
 | 접속 점검 간격, 허용 연속 실패 횟수 | 위 "값의 관계"에 맞춰 | Robbie·Juunnmmoo |
 | 키 이름 규칙 | 용도 먼저(`pw01:<용도>:<식별자>`, v1). v0 틀은 도메인 먼저였음 | Sang-Hyun-Kim |
-| Redis 클러스터(배포 때) | 세션 스크립트는 키 둘을, 랭킹 스크립트는 한 보드의 키 2~5개를 함께 다룬다. 클러스터 모드에서는 그 키들이 같은 슬롯이어야 하므로 클러스터 모드를 끄거나(복제만) 해시 태그를 쓴다 | Sang-Hyun-Kim(배포 때) |
+| Redis 클러스터(배포 때) | 세션 스크립트는 키 둘을, 랭킹 스크립트는 한 보드의 키 2~5개를 함께 다룬다. 클러스터 모드에서는 그 키들이 같은 슬롯이어야 하므로 클러스터 모드를 끄거나(복제만) 해시 태그를 쓴다. 서버 사이 전달(v1.5)도 클러스터 모드에서는 샤드 Pub/Sub으로 바꿔야 한다. 배포 ElastiCache는 클러스터 모드 끔(10/14) | Sang-Hyun-Kim(배포 때) |
 | 랭킹 "다시 채울 보드" 표시를 잃지 않게 | 서버 메모리. 확장 때 아웃박스 표 또는 관리자 다시 채우기 명령 | Sang-Hyun-Kim |
 
 ## 변경 이력
@@ -516,3 +576,4 @@ return 1
 | v1.1 | 2026-10-07 | 인증 방식 결정 기록 추가(불투명 토큰 + Redis 세션, HandlerInterceptor, 이유·대가·다시 볼 때). 키·스크립트는 바뀌지 않음 |
 | v1.3 | 2026-10-12 | 랭킹 절: 보드 이름(스테이지·지역·전체 총합 × 난이도 × 전체·주간, 진행), ZSet 점수 = −보드 점수, 멤버 = 달성 ms + 기록 순번 + 계정 ID + 상세, 키(ZSet + 계정 → 멤버 해시, 임시 보드, 다시 채우기 잠금), 설정 5개(전체 보드 30일, 주간 보관 14일, 잠금 30초, 임시 보드 60초, 묶음 500), 명령 순서(커밋 뒤 갱신, 실패 표시, 다시 채우기, 부분 장애 때 MySQL), Lua 6개, 유의사항. v1.2(중복 방지 키, `docs/s3-stat-api`) 다음 판 |
 | v1.4 | 2026-10-13 | 플레이 체크포인트 절: 키 `pw01:play-checkpoint:<stagePlayId>`(String JSON, 만료 = 플레이 마감), 설정 `state` 최대 크기 64KB, 명령 순서(C1 비교·저장 한 번에, C2 읽기, 판 끝 때 커밋 뒤 삭제), Lua `play_checkpoint_put.lua` |
+| v1.5 | 2026-10-15 | 실시간 서버 사이 전달 절(M23 뼈대): Pub/Sub 채널 셋 종류(전체 `pw01:realtime-relay:global`, 길드마다 `pw01:realtime-relay:guild:<길드 ID>` + 패턴 구독, 지정 `pw01:realtime-relay:target`), 메시지 모양(`v`·`kind`·`origin`·`guildId`·`accountIds`·`message`), 놓칠 수 있음·전용 구독 연결·받기 스레드 하나, 설정 6개. "Redis 접근" 표에 Pub/Sub 줄, M23 채팅·길드 예정 키 이름 안내. 키는 늘지 않음 |

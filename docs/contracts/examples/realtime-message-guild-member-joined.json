@@ -1,0 +1,11 @@
+{
+  "type": "GUILD_MEMBER_JOINED",
+  "id": "3a9e1b7c-2d4f-4e6a-8b0c-5d7e9f1a3b2c",
+  "sentAt": "2026-10-17T05:10:00.456Z",
+  "data": {
+    "guildId": "7",
+    "accountId": "57",
+    "nickname": "궁수",
+    "memberCount": 4
+  }
+}
