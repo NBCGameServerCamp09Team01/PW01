@@ -1,12 +1,13 @@
-# 서버 웨이브 구성 흐름 (M24: 서버 주관 웨이브 · 몬스터 카탈로그)
+# 서버 웨이브 구성 흐름 (M24: 서버 주관 웨이브 · 몬스터 카탈로그, M9: 난이도)
 
-> 상태: 초안(구현 전) · 명세: [stage-api.md 서버 정의 파일](../contracts/stage-api.md#서버-정의-파일), [stage-play-api.md 웨이브 구성](../contracts/stage-play-api.md#웨이브-구성), [이어하기](../contracts/stage-play-api.md#이어하기) · 함께 보기: [play-checkpoint.md](play-checkpoint.md)
+> 상태: 초안(구현 전) · 명세: [stage-api.md 서버 정의 파일](../contracts/stage-api.md#서버-정의-파일)·[난이도](../contracts/stage-api.md#난이도), [stage-play-api.md 웨이브 구성](../contracts/stage-play-api.md#웨이브-구성), [이어하기](../contracts/stage-play-api.md#이어하기) · 함께 보기: [play-checkpoint.md](play-checkpoint.md)
 
 웨이브 구성(몬스터·수·보스·골드·쉬는 시간)의 원본은 **서버 파일**입니다. 서버는 판을 시작할 때 구성을 만들어 플레이에 고정하고, 게임은 받은 구성으로만 웨이브를 만듭니다. 이어하기도 같은 구성을 씁니다.
 - ①~② 판 시작(보통·체크포인트에서 이어하기)
 - ③~④ 구성을 쓸 수 없을 때
 - ⑤ 스테이지 선택 미리보기
 - ⑥ 서버: 기동 검사, 정의가 바뀐 뒤의 진행 중 판
+- ⑦ 난이도 고르기 → 서버가 반영한 구성 → 적 능력치 배율(M9, 작성안)
 
 `(새)`는 M24에서 새로 만드는 클래스·함수입니다.
 
@@ -182,3 +183,42 @@ sequenceDiagram
 ```
 
 - v1.3 배포 전에 시작한 플레이는 `wave_plan`이 비어 있습니다. 응답할 때 지금 정의로 채우고, 지금 웨이브 수가 그 플레이의 `waveCount`와 다르면 `waves`·`waveVersion`을 `null`로 보냅니다(게임은 ③·④대로).
+
+## ⑦ 난이도 (M9, 작성안)
+
+난이도는 몬스터 종류를 바꾸지 않고 **마리 수와 능력치만** 바꿉니다. 서버가 P1 때 그 난이도를 구성에 반영해 고정하므로 게임은 계산하지 않습니다. 이어하기는 P2의 `difficulty`·`waves`를 그대로 씁니다.
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant UI as UWarriorStageSelectPopupWidget
+  participant SL as UWarriorStageLaunchSubsystem
+  participant GM as AWarriorStageGameMode
+  participant SP as UWarriorStagePlaySubsystem
+  participant WS as 웹서버 StagePlayService
+  participant CAT as StageCatalog
+  participant SPN as AWarriorWaveSpawner
+  participant AI as AWarriorAICharacter
+
+  UI->>UI: 난이도 버튼(ST1 difficulties), 처음엔 0, 그 뒤엔 마지막에 고른 값
+  UI->>SL: SelectStage(stageId, difficulty)
+  SL-->>GM: 레벨 열기 → LaunchInfo.Difficulty
+  GM->>SP: StartStagePlay(stageId, difficulty)
+  SP->>WS: P1 {stageId, difficulty}
+  WS->>CAT: 그 스테이지·그 난이도의 구성
+  CAT-->>WS: 마리 수(배율 줄 / countByDifficulty 계단식), 골드 배율, healthMultiplier·damageMultiplier
+  WS-->>SP: 201 {difficulty, waveVersion "w…-m…-d…", waves}
+  SP-->>GM: OnWavePlanChanged(Ready), 판 난이도 = 응답 difficulty
+  GM->>SPN: 웨이브 시작(마리 수·골드는 이미 반영)
+  SPN->>AI: 스폰 → 배율 전달
+  AI->>AI: 시작 GE 적용(비동기) 뒤 최대·현재 체력, 공격력에 곱함 → Initializing 해제
+  Note over GM: 결과 R1의 difficulty = 판 난이도 → 랭킹은 그 난이도 보드
+```
+
+| 경우 | 처리 |
+|---|---|
+| 서버에 없는 난이도 | P1 400 `VALIDATION_FAILED` → ③대로 판 시작 안 함 |
+| 같은 `requestId`로 다른 난이도 | 409 `IDEMPOTENCY_KEY_REUSED`(게임 버그) |
+| 이어하기 | P2 `difficulty`를 이어하기 정보에 실음. 구성에 배율이 들어 있어 따로 계산 안 함 |
+| v1.4 전 플레이·구성 | 난이도 0, 적 줄 배율 칸이 없으면 1.0 |
+| 서버 플레이 없음(개발 시험) | 난이도 0, 배율 1.0, UE 웨이브 DataAsset |

@@ -1,6 +1,6 @@
 # 랭킹 API (Ranking API)
 
-> 버전: v1 · 상태: 초안 · 호출: 게임 클라이언트(UE) → 웹서버 · 게임 담당: Sang-Hyun-Kim · 웹서버 담당: Sang-Hyun-Kim (리뷰: Robbie)
+> 버전: v1.1 · 상태: 초안 · 호출: 게임 클라이언트(UE) → 웹서버 · 게임 담당: Sang-Hyun-Kim · 웹서버 담당: Sang-Hyun-Kim (리뷰: Robbie)
 
 스테이지·지역 총합·전체 총합·진행 네 가지 순위입니다. 순위는 서버가 받아들인 클리어 결과만으로 서버가 만듭니다.
 
@@ -33,13 +33,14 @@
 T = 스테이지 권장 클리어 시간(stage-api ST1 recommendedClearSeconds)
 t = 클리어 시간(결과 요청의 playTimeSeconds를 서버가 밀리초로 저장한 값)
 남은 시간 r = max(0, T − t)
-스테이지 점수 = floor(M × (1000 + floor(9000 × r / T)))     M = 난이도 배수(지금 늘 1)
+스테이지 점수 = floor(M × (1000 + floor(9000 × r / T)))     M = 난이도 배수(scoreMultiplierPercent / 100)
 ```
 
 - 1,000~10,000점입니다. 빨리 깰수록 높고, 권장 시간을 넘겨도 클리어면 1,000점입니다.
 - 예: T 300초, t 183.4초 → 1000 + floor(9000 × 116.6 / 300) = **4498점**.
 - 점수는 서버가 클리어를 기록할 때 계산해 저장합니다. 나중에 권장 시간을 바꿔도 이미 기록된 점수는 다시 계산하지 않습니다.
-- 난이도 배수 `M`은 자리만 있습니다(지금 결과는 모두 난이도 0, M = 1).
+- 난이도 배수 `M`은 서버 `difficulties.json`의 `scoreMultiplierPercent`입니다([stage-api.md 서버 정의 파일](stage-api.md#서버-정의-파일)). 난이도 0은 늘 100%(M = 1). 처음 값은 모든 난이도 100%입니다.
+- 보드는 난이도마다 따로라 `M`은 같은 보드 안의 순서를 바꾸지 않습니다. 점수 숫자만 바뀝니다. 점수는 기록할 때 저장하므로 배수를 바꿔도 지난 기록은 그대로입니다.
 
 ## 보드와 순서
 
@@ -74,7 +75,7 @@ t = 클리어 시간(결과 요청의 playTimeSeconds를 서버가 밀리초로 
 
 | 이름 | 쓰는 곳 | 타입 | 기본 | 규칙 |
 |---|---|---|---|---|
-| `difficulty` | RK1~4, RK7·RK8 | integer | 0 | 서버가 받는 난이도만(지금 0). 진행 보드에는 없음 |
+| `difficulty` | RK1~4, RK7·RK8 | integer | 0 | `difficulties.json`에 있는 난이도만. 없는 번호는 400 `VALIDATION_FAILED`. 진행 보드에는 없음 |
 | `period` | RK1~RK8 | string | `all` | `all` · `weekly`. 진행 보드(RK5·RK6)는 `all`만 |
 | `limit` | RK1·3·5·7 | integer | 20 | 1~50 |
 | `cursor` | RK1·3·5·7 | string | 없음(1위부터) | 앞 응답의 `nextCursor` **그대로** |
@@ -199,7 +200,6 @@ t = 클리어 시간(결과 요청의 playTimeSeconds를 서버가 밀리초로 
 
 | 무엇 | 지금 | 누가 |
 |---|---|---|
-| 난이도 배수와 보드 | 배수 자리만(×1). 난이도가 생기면 "난이도별 보드 유지"와 "배수로 합친 하나의 보드" 중 고름 | Sang-Hyun-Kim |
 | 지난 주 보드 조회, 시즌 | 없음 | Sang-Hyun-Kim |
 | 결과 응답의 "새 기록·순위" 칸 | 없음. 넣으면 [result-api.md](result-api.md) v1.x | Robbie·Sang-Hyun-Kim |
 | 정지된 계정을 순위에서 뺄지 | 빼지 않음 | Sang-Hyun-Kim |
@@ -212,3 +212,4 @@ t = 클리어 시간(결과 요청의 playTimeSeconds를 서버가 밀리초로 
 | 버전 | 날짜 | 내용 |
 |---|---|---|
 | v1 | 2026-10-12 | 초안: 스테이지·지역 총합·전체 총합·진행 순위(진행 말고는 전체·주간), 점수(권장 클리어 시간에서 남은 시간, 1,000~10,000), 순서(점수 → 먼저 달성 → 먼저 기록), 덮어쓰기, RK1~RK8, 값 커서, 장애 때 응답(Redis 전체 장애는 503, 랭킹 명령만 실패하면 MySQL), 오류 `RANK_INVALID_CURSOR`, 유의사항 |
+| v1.1 | 2026-10-15 | 난이도(M9): 보드는 난이도별 그대로, 배수 `M` = `difficulties.json`의 `scoreMultiplierPercent`(처음 모두 100%), 받는 `difficulty`는 그 파일에 있는 번호. "정할 것"의 난이도 배수와 보드 줄 정리. 칸은 그대로 |
