@@ -1,0 +1,14 @@
+{
+  "data": {
+    "messageId": "1042",
+    "scope": "GUILD",
+    "guildId": "7",
+    "senderAccountId": "12",
+    "senderNickname": "용사",
+    "text": "다들 스테이지 2 깼어요?",
+    "sentAt": "2026-10-17T05:00:00.120Z"
+  },
+  "meta": {
+    "requestId": "c2f8a1d0-7b4e-4a39-8d61-0e5f9b2c7a14"
+  }
+}
