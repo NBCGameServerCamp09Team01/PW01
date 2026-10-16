@@ -1,0 +1,26 @@
+{
+  "data": {
+    "guild": {
+      "guildId": "7", "name": "새벽기사단", "leaderAccountId": "12", "leaderNickname": "용사",
+      "memberCount": 3, "maxMembers": 30, "createdAt": "2026-10-16T06:00:00.123Z",
+      "myRole": "LEADER"
+    },
+    "members": [
+      { "accountId": "12", "nickname": "용사", "role": "LEADER", "joinedAt": "2026-10-16T06:00:00.123Z", "online": true },
+      { "accountId": "57", "nickname": "궁수", "role": "MEMBER", "joinedAt": "2026-10-16T06:20:41.008Z", "online": false },
+      { "accountId": "63", "nickname": "Mage 2", "role": "MEMBER", "joinedAt": "2026-10-16T07:02:13.500Z", "online": true }
+    ],
+    "pendingJoinRequestCount": 2,
+    "myJoinRequests": [],
+    "create": {
+      "allowed": false,
+      "requirements": [
+        { "type": "STAGE_CLEARED", "stageId": "stage.01.01", "met": true }
+      ]
+    },
+    "rejoinAvailableAt": null
+  },
+  "meta": {
+    "requestId": "0b6f3c1e-8a2d-4c6e-9f10-2a7b5d9e1c34"
+  }
+}

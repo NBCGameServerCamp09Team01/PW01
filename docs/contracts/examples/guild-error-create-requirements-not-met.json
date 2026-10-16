@@ -1,0 +1,9 @@
+{
+  "code": "GUILD_CREATE_REQUIREMENTS_NOT_MET",
+  "message": "길드를 만들 조건을 채우지 못했습니다.",
+  "path": "/guilds",
+  "retryable": false,
+  "requirements": [
+    { "type": "STAGE_CLEARED", "stageId": "stage.01.01", "met": false }
+  ]
+}

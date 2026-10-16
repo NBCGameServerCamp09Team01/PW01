@@ -1,0 +1,6 @@
+{
+  "code": "GUILD_FULL",
+  "message": "길드 정원이 찼습니다.",
+  "path": "/accounts/me/guild/join-requests/105/approve",
+  "retryable": false
+}

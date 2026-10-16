@@ -1,0 +1,12 @@
+{
+  "type": "GUILD_JOIN_REQUESTED",
+  "id": "1f2e3d4c-5b6a-4798-8a7b-6c5d4e3f2a10",
+  "sentAt": "2026-10-16T09:00:00.050Z",
+  "data": {
+    "guildId": "7",
+    "joinRequestId": "105",
+    "accountId": "88",
+    "nickname": "초보",
+    "pendingCount": 2
+  }
+}

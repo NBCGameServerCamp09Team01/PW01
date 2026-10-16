@@ -1,0 +1,8 @@
+{
+  "type": "GUILD_DISBANDED",
+  "id": "8e7d6c5b-4a39-4281-9706-f5e4d3c2b1a0",
+  "sentAt": "2026-10-17T05:30:00.000Z",
+  "data": {
+    "guildId": "7"
+  }
+}

@@ -1,6 +1,6 @@
 # 실시간 연결 명세 (Realtime API)
 
-> 버전: v1.3 · 상태: 초안 · 연결: 게임 클라이언트(UE) ⇄ 웹서버(WebSocket) · 게임 담당: Juunnmmoo · 웹서버 담당: Juunnmmoo (리뷰: Sang-Hyun-Kim 배정)
+> 버전: v1.4 · 상태: 초안 · 연결: 게임 클라이언트(UE) ⇄ 웹서버(WebSocket) · 게임 담당: Juunnmmoo · 웹서버 담당: Juunnmmoo (리뷰: Sang-Hyun-Kim 배정)
 
 로그인한 게임과 웹서버를 WebSocket 하나로 이어 둡니다(S7). 이 연결이 하는 일은 둘입니다.
 
@@ -9,7 +9,7 @@
 
 - 시각·ID·오류 응답 모양: [README.md 공통 규칙](README.md#공통-규칙)
 - 인증(토큰, 세션 연장, 401 네 종류): [auth-api.md 인증](auth-api.md#인증)
-- Redis 키·스크립트: [redis-keys.md](redis-keys.md) v1.5. 이 명세는 새 키를 만들지 않습니다. 연결 목록은 서버 메모리에 두고, 서버 사이 전달은 Redis Pub/Sub 채널을 씁니다([서버 여러 대](#서버-여러-대), [redis-keys.md 실시간 서버 사이 전달](redis-keys.md#실시간-서버-사이-전달v15))
+- Redis 키·스크립트: [redis-keys.md](redis-keys.md) v1.6. 이 명세는 새 키를 만들지 않습니다(접속 상태 키는 길드 기능이 [redis-keys.md 접속 상태](redis-keys.md#접속-상태v16)에 둠). 연결 목록은 서버 메모리에 두고, 서버 사이 전달은 Redis Pub/Sub 채널을 씁니다([서버 여러 대](#서버-여러-대), [redis-keys.md 실시간 서버 사이 전달](redis-keys.md#실시간-서버-사이-전달v15))
 
 ## 원칙
 
@@ -118,15 +118,24 @@ WebSocket 표준 Ping/Pong을 씁니다(RFC 6455). 앱 메시지가 아닙니다
 | `SESSION_REPLACED` | v1 구현 | 같은 계정이 다른 곳에서 로그인함(A2) 또는 Pong으로 연장하다 다른 곳 로그인을 알게 됨 | `{}` | "다른 곳에서 로그인" 안내 후 타이틀(HTTP 401 `AUTH_SESSION_REPLACED`와 같은 처리) | 서버가 `4001`로 닫음 |
 | `ACCOUNT_CHANGED` | **예약**(v1에서 서버가 보내지 않음) | 이 게임이 보낸 HTTP 요청이 아닌 경로로 계정 진행이 바뀌었을 때. 보내는 경우가 생기면 이 칸에 적고 v1.1로 올림 | `{ "version": 3 }` (바뀐 뒤의 계정 스냅샷 `version`) | 지금 가진 `version`보다 크면 `GET /accounts/me`(A3)로 스냅샷을 다시 받음 | 유지 |
 | `CHAT_MESSAGE` | **초안**(M23 채팅 — 채팅 담당 PR에서 확정) | 전체 채팅 또는 길드 채팅이 보내졌을 때(서버 저장·처리 뒤). 전체는 접속한 모두에게, 길드는 그 길드원에게만 | 채팅 한 줄: `{ "messageId": "1042", "scope": "GUILD", "guildId": "7", "senderAccountId": "12", "senderNickname": "용사", "text": "안녕", "sentAt": "…Z" }`. `scope`는 `GLOBAL`·`GUILD`, 전체면 `guildId`는 `null` | `scope`로 탭(전체·내 길드)을 골라 아래에 붙임. `GUILD`인데 `guildId`가 지금 내 길드가 아니면 버림. 같은 `messageId`는 한 번만 | 유지 |
-| `GUILD_MEMBER_JOINED` | **초안**(M23 소셜 — 소셜 담당 PR에서 확정) | 누가 길드에 가입함 | `{ "guildId": "7", "accountId": "57", "nickname": "궁수", "memberCount": 4 }` | 길드 화면 목록·인원 갱신 | 유지 |
-| `GUILD_MEMBER_LEFT` | **초안**(M23 소셜) | 누가 길드에서 나감 | `{ "guildId": "7", "accountId": "57", "memberCount": 3, "reason": "LEFT" }`. `reason`은 지금 `LEFT`만(내보내기를 넣으면 값 추가) | 목록·인원 갱신. 나간 사람이 나 자신이면 길드 화면을 닫고 길드 탭을 비움 | 유지 |
-| `PRESENCE_CHANGED` | **초안·선택**(M23 소셜, 현황에 접속 표시를 넣을 때) | 길드원이 접속하거나 끊김 | `{ "guildId": "7", "accountId": "57", "online": true }` | 현황의 접속 표시 갱신 | 유지 |
-| `GUILD_DISBANDED` | **초안·선택**(M23 소셜, 해체를 넣을 때) | 길드가 해체됨 | `{ "guildId": "7" }` | 길드 화면을 닫고 길드 탭을 비움 | 유지 |
+| `GUILD_MEMBER_JOINED` | **합의**(M23 길드, v1.4) | 길드장이 가입 신청을 수락함([guild-api.md G8](guild-api.md#g8-신청-수락--post-accountsmeguildjoin-requestsjoinrequestidapprove)). 받는 사람: 길드원 전부(새 사람 포함) | `{ "guildId": "7", "accountId": "57", "nickname": "궁수", "memberCount": 4 }` | 아래 [길드 알림 처리](#길드-알림-처리). 새 사람이 나 자신이면 길드 탭이 열림 | 유지 |
+| `GUILD_MEMBER_LEFT` | **합의**(M23 길드, v1.4) | 길드원이 탈퇴(G11)하거나 내보내짐(G10, Lv2). 받는 사람: 남은 길드원 + 나간 사람 | `{ "guildId": "7", "accountId": "57", "memberCount": 3, "reason": "LEFT" }`. `reason`은 `LEFT`(탈퇴) · `KICKED`(내보내기, Lv2부터) | 길드 알림 처리. 나간 사람이 나 자신이면 길드 탭을 비움(`KICKED`면 "길드에서 내보내졌습니다") | 유지 |
+| `GUILD_DISBANDED` | **합의**(M23 길드, v1.4) | 길드장이 해체함(G12, 혼자인 길드장의 탈퇴 포함). 받는 사람: 해체 직전 길드원 + 그 길드에 신청 중이던 사람 | `{ "guildId": "7" }` | 길드 알림 처리. 길드원이었으면 "길드가 해체되었습니다", 신청자는 내 신청 목록에서 빠짐 | 유지 |
+| `GUILD_JOIN_REQUESTED` | **합의**(M23 길드, v1.4) | 누가 가입을 신청함(G5). 받는 사람: 그 길드의 길드장 | `{ "guildId": "7", "joinRequestId": "105", "accountId": "88", "nickname": "초보", "pendingCount": 2 }`. `pendingCount`는 대기 중 신청 수 | 길드 알림 처리(길드장 표시·받은 신청 수) | 유지 |
+| `GUILD_JOIN_REJECTED` | **합의**(M23 길드, v1.4) | 길드장이 내 신청을 거절함(G9). 받는 사람: 신청자 | `{ "guildId": "7", "guildName": "새벽기사단", "joinRequestId": "105" }` | 길드 알림 처리. "○○ 길드가 신청을 거절했습니다" | 유지 |
+| `PRESENCE_CHANGED` | **초안·선택**(M23 길드 Lv2) | 길드원이 접속하거나 끊김. 받는 사람: 그 길드원 | `{ "guildId": "7", "accountId": "57", "online": true }` | 길드원 목록의 접속 표시 갱신. 그 전에는 [guild-api.md G4](guild-api.md#g4-내-길드--get-accountsmeguild)의 `online`만 | 유지 |
 
 - `ACCOUNT_CHANGED`는 틀을 정해 두려고 표에 둡니다. 계정당 접속이 하나이고 계정 값은 이 게임이 HTTP로 바꾸므로(그 응답으로 새 값을 받음), 지금은 보낼 경우가 없습니다. 게임은 받았을 때의 처리를 v1에서 만들지 않아도 됩니다(받으면 무시해도 규칙 위반이 아님).
 - **초안** 줄은 이름과 `data` 틀만 먼저 정해 둔 것입니다(두 담당이 같은 표를 따로 고치지 않게). 각 담당이 자기 줄을 확정하는 PR을 냅니다. 서버가 아직 보내지 않는 동안 게임이 받으면 무시해도 됩니다.
 - `messageId`는 게임이 모양(숫자·UUID)에 기대지 않는 문자열입니다. 같은지 비교하거나 받은 값을 그대로 돌려 보내는 데만 씁니다. 지금 전체 채팅은 서버에 저장하지 않아 UUID이고, 길드 채팅은 저장 번호입니다. 전체 채팅을 저장하게 되면 모양이 바뀔 수 있습니다.
-- 길드에 관한 메시지(`CHAT_MESSAGE`의 길드 채팅, `GUILD_*`, `PRESENCE_CHANGED`)는 **그 길드원에게만** 갑니다. 한 사람은 길드 하나에만 들 수 있습니다.
+- 길드에 관한 메시지(`CHAT_MESSAGE`의 길드 채팅, `GUILD_*`, `PRESENCE_CHANGED`)는 **그 길드원에게만** 갑니다(위 표의 "받는 사람"처럼 나간 사람·신청자가 더해질 수 있음). 한 사람은 길드 하나에만 들 수 있습니다.
+
+#### 길드 알림 처리
+
+- 서버는 길드 데이터가 **커밋된 뒤에** `GUILD_*`를 보냅니다. 되돌려진 요청의 알림은 나가지 않습니다.
+- 게임은 `GUILD_*`를 **신호로만** 씁니다. 받으면 0.5초 동안 더 오는 길드 알림을 모아, [guild-api.md G4](guild-api.md#g4-내-길드--get-accountsmeguild) `GET /accounts/me/guild`를 **한 번** 다시 받아 길드 화면을 그립니다. `data`의 `memberCount` 등은 다시 받기 전 잠깐 보이는 값입니다.
+- 이유: 알림은 놓칠 수 있고([원칙](#원칙)) 다른 서버에서 온 알림끼리 순서가 바뀔 수 있습니다. 다시 받은 G4가 늘 맞는 값입니다.
+- 길드 화면이 닫혀 있어도 내 소속이 바뀌는 알림(내가 들어감·나감·해체)은 처리해 메인메뉴 길드 표시와 채팅 길드 탭을 맞춥니다.
 
 #### 이름 규칙
 
@@ -139,7 +148,7 @@ WebSocket 표준 Ping/Pong을 씁니다(RFC 6455). 앱 메시지가 아닙니다
 
 - 새 종류를 더할 때: 이 표에 한 줄과 `data` 모양을 먼저 적고(명세 v1.x), 서버 → 게임 순으로 배포합니다. 예정: 우편 도착, 공지·점검, 이용 제한.
 
-예시: `examples/realtime-message-session-replaced.json`, `examples/realtime-message-account-changed.json`, `examples/realtime-message-chat-message.json`, `examples/realtime-message-guild-member-joined.json`
+예시: `examples/realtime-message-session-replaced.json`, `examples/realtime-message-account-changed.json`, `examples/realtime-message-chat-message.json`, `examples/realtime-message-guild-member-joined.json`, `examples/realtime-message-guild-member-left.json`, `examples/realtime-message-guild-disbanded.json`, `examples/realtime-message-guild-join-requested.json`, `examples/realtime-message-guild-join-rejected.json`
 
 ## 종료 코드
 
@@ -170,7 +179,7 @@ WebSocket 표준 Ping/Pong을 씁니다(RFC 6455). 앱 메시지가 아닙니다
 - 로그아웃(A5)은 서버 사이로 넘기지 않습니다. 다른 서버에 남은 연결은 게임이 로그아웃하며 스스로 닫습니다.
 - 연결이 끊겨 게임이 [다시 연결](#다시-연결)하면 로드 밸런서가 **살아 있는 서버**로 보냅니다. 서버 한 대가 꺼져도 게임 코드는 바뀌지 않습니다.
 - 로드 밸런서의 유휴 시간 제한(배포 설정 120초, 로컬 로드 밸런서도 120초)은 Ping 간격(60초)보다 길어야 합니다. 짧으면 조용한 연결이 끊깁니다.
-- 접속 상태(누가 접속해 있나) 키는 그 기능(M23 소셜)이 redis-keys.md에 먼저 적고 씁니다.
+- 접속 상태(누가 접속해 있나)는 연결한 서버가 Redis에 적습니다([redis-keys.md 접속 상태](redis-keys.md#접속-상태v16)). 어느 서버에 붙었든 같은 값을 읽습니다.
 
 ## 설정 값
 
@@ -192,3 +201,4 @@ WebSocket 표준 Ping/Pong을 씁니다(RFC 6455). 앱 메시지가 아닙니다
 | v1.1 | 2026-10-11 | UE `IWebSocket` 제약 반영: 게임 쪽 Ping 감시 삭제, 연결 실패 때 A4로 세션 확인. A4는 지우지 않고 실시간 연결이 없는 동안 씀. 연결이 끊긴 것만으로는 로그인을 끝내지 않음(스테이지·메뉴 모두). 다른 곳 로그인 알림 근거를 로그인 이벤트로 고침, 로그아웃 때 `1000`으로 닫음. Origin을 검사하지 않음(UE가 보내는 `Origin` 때문에 403이 나던 것, 10/11 PIE에서 발견) |
 | v1.2 | 2026-10-15 | 배포 환경(로드 밸런서 뒤) 동작: 다른 곳 로그인 알림이 최대 60초 늦을 수 있음, 다시 연결은 살아 있는 서버로, 유휴 시간 제한 > Ping 간격. 메시지·종료 코드는 그대로(호환) |
 | v1.3 | 2026-10-15 | 서버 사이 전달(Redis Pub/Sub, M23 뼈대): 서버 여러 대에서도 알림이 받는 사람에게 감, 다른 곳 로그인 보통 1초 안(놓치면 최대 60초), 다른 서버 메시지끼리 순서 보장 없음. M23 메시지 종류 초안 다섯(`CHAT_MESSAGE`, `GUILD_MEMBER_JOINED`, `GUILD_MEMBER_LEFT`, 선택 `PRESENCE_CHANGED`·`GUILD_DISBANDED`)과 이름 규칙, `messageId`는 모양에 기대지 않는 문자열. 설정 값 셋. 기존 메시지·종료 코드는 그대로(호환) |
+| v1.4 | 2026-10-16 | M23 길드: `GUILD_MEMBER_JOINED`·`GUILD_MEMBER_LEFT`(`reason`에 `KICKED` 추가)·`GUILD_DISBANDED` 합의, 새 `GUILD_JOIN_REQUESTED`(→ 길드장)·`GUILD_JOIN_REJECTED`(→ 신청자), 종류마다 받는 사람, [길드 알림 처리](#길드-알림-처리)(커밋 뒤 보냄, 게임은 신호로 받아 0.5초 모아 G4 다시 받기). `PRESENCE_CHANGED`는 Lv2 선택 그대로. 접속 상태 키 위치. 호환 |
