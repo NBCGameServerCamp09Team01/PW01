@@ -11,10 +11,10 @@
 | [result-api.md](result-api.md) | v1.2 | 초안 | Robbie | Robbie (리뷰: Sang-Hyun-Kim) |
 | [stage-api.md](stage-api.md) | v1.3 | 초안 | Sang-Hyun-Kim | Sang-Hyun-Kim (리뷰: Robbie) |
 | [stage-play-api.md](stage-play-api.md) | v1.3 | 초안 | Robbie | Sang-Hyun-Kim (리뷰: Robbie) |
-| [realtime-api.md](realtime-api.md) | v1.3 | 초안 | Juunnmmoo | Juunnmmoo (리뷰: Sang-Hyun-Kim 배정) |
+| [realtime-api.md](realtime-api.md) | v1.4 | 초안 | Juunnmmoo | Juunnmmoo (리뷰: Sang-Hyun-Kim 배정) |
 | [ranking-api.md](ranking-api.md) | v1 | 초안 | Sang-Hyun-Kim | Sang-Hyun-Kim (리뷰: Robbie) |
 | [guild-api.md](guild-api.md) | v1 | 초안 | Sang-Hyun-Kim | Sang-Hyun-Kim (리뷰: 채팅 담당) |
-| [redis-keys.md](redis-keys.md) | v1.5 | 합의(v1.3 랭킹 절·v1.4 체크포인트 키·v1.5 서버 사이 전달 채널 초안) | — | Sang-Hyun-Kim (리뷰: Robbie) |
+| [redis-keys.md](redis-keys.md) | v1.6 | 합의(v1.3 랭킹 절·v1.4 체크포인트 키·v1.5 서버 사이 전달 채널·v1.6 접속 상태·길드 절 초안) | — | Sang-Hyun-Kim (리뷰: Robbie) |
 
 - 상태: `작성 전` → `초안` → `합의` → `구현됨`
 - 요청·응답 JSON 예시는 [examples/](examples/) 에 둡니다.
