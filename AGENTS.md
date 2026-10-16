@@ -53,7 +53,7 @@
 | 작업 공간 전체 | `docs/overview.md` | 구성 요소(게임 클라이언트·웹서버·MySQL·Redis)와 요청 흐름 |
 | Git 규칙 | `docs/git-workflow.md` | 저장소별 기준 브랜치(Root `main`, 게임·웹서버 `dev`), 브랜치 이름, 커밋·PR 형식 |
 | 게임 ↔ 웹서버 약속 | `docs/contracts/README.md` | 명세 목록, 공통 API 규칙(경로는 기능 이름부터·버전 없음, 시각 UTC, 오류 응답 형식, 모르는 필드), 변경 절차 |
-| 기능 흐름도 | `docs/flows/` | 게임·웹서버를 오가는 기능의 경우별 sequenceDiagram(실제 클래스·함수 이름). `play-checkpoint.md`: 진행 중 스테이지 이어하기, `ops-health.md`: Actuator 상태 확인·요청 번호로 로그 찾기, `account-snapshot.md`: 계정 스냅샷 동기화, `server-wave.md`: 서버 웨이브 구성(판 시작·이어하기), `deploy.md`: PR → `dev` 병합 → 이미지 → ECR → EC2 자동 배포·손 배포·되돌림, `realtime-relay.md`: 서버 여러 대에서 실시간 메시지 넘기기(Redis Pub/Sub, 전체·길드마다·지정 채널, 다른 곳 로그인 4001) |
+| 기능 흐름도 | `docs/flows/` | 게임·웹서버를 오가는 기능의 경우별 sequenceDiagram(실제 클래스·함수 이름). `play-checkpoint.md`: 진행 중 스테이지 이어하기, `ops-health.md`: Actuator 상태 확인·요청 번호로 로그 찾기, `account-snapshot.md`: 계정 스냅샷 동기화, `server-wave.md`: 서버 웨이브 구성(판 시작·이어하기), `deploy.md`: PR → `dev` 병합 → 이미지 → ECR → EC2 자동 배포·손 배포·되돌림, `realtime-relay.md`: 서버 여러 대에서 실시간 메시지 넘기기(Redis Pub/Sub, 전체·길드마다·지정 채널, 다른 곳 로그인 4001), `guild.md`: 길드 만들기·신청·수락(다른 서버)·거절·탈퇴·해체·동시 수락 정원·접속 표시 |
 | 웹서버 작업 규칙 | `PW01WebServer/AGENTS.md` | 웹서버 폴더 작업에서 이 파일보다 우선. 3계층·DTO·오류·테스트·Git(AI) 규칙 |
 | 웹서버 처음 받기 | `PW01WebServer/README.md` | 준비물, 받기, `.env`, compose, 실행 구성, 빌드 |
 | 웹서버 세팅 명세 | `PW01WebServer/docs/initial-setup.md` | 파일·의존성·설정 키·기동 순서·오류 흐름·테스트·CI 각각의 역할 |
