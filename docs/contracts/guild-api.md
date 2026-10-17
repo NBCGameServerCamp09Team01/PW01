@@ -7,7 +7,7 @@
 - 경로·시각·성공 응답 `{data, meta}`·오류 응답·요청 번호: [README.md 공통 규칙](README.md#공통-규칙)
 - 다시 보내기·한 번만 반영: [README.md 상태를 바꾸는 요청과 재전송](README.md#상태를-바꾸는-요청과-재전송). 길드만의 차이는 아래 [한 번만 반영](#한-번만-반영)
 - 인증(토큰, 세션 연장, 401 네 종류): [auth-api.md 인증](auth-api.md#인증). 아래 API는 모두 인증이 필요합니다
-- 길드 실시간 알림(`GUILD_*`)·길드원 접속 바뀜(`PRESENCE_CHANGED`): [realtime-api.md](realtime-api.md#메시지-종류) v1.5
+- 길드 실시간 알림(`GUILD_*`)·길드원 접속 바뀜(`PRESENCE_CHANGED`): [realtime-api.md](realtime-api.md#메시지-종류) v1.6
 - 길드 채팅은 이 명세에 없습니다(채팅 명세). 길드는 채팅이 쓸 소속 정보만 줍니다
 - 아래 "응답 `data`" 표는 성공 응답의 `data` 안쪽 모양입니다.
 
@@ -333,7 +333,7 @@ G1의 목록 항목, G2의 `guild`, G4의 `guild`(+ `myRole`)가 같은 필드�
 
 | 어디 | 쓰는 것 | 주의 |
 |---|---|---|
-| 웹서버 | `common/chat/GuildDirectory`: `guildIdOf(계정)`·`isMember(길드, 계정)`·`memberIds(길드)` | 매번 MySQL에서 읽음(캐시 없음, [redis-keys.md 길드](redis-keys.md#길드v16)). 길드 ID는 숫자 문자열 |
+| 웹서버 | `common/chat/GuildDirectory`: `guildIdOf(계정)`·`isMember(길드, 계정)`·`memberIds(길드)` | 매번 MySQL에서 읽음(캐시 없음, [redis-keys.md 길드](redis-keys.md#길드v17)). 길드 ID는 숫자 문자열 |
 | 웹서버 | 길드 생애 이벤트 `GuildMemberJoinedEvent`·`GuildMemberLeftEvent`(`reason` `LEFT`·`KICKED`)·`GuildDisbandedEvent`(해체 직전 길드원 목록 포함) | 길드 트랜잭션 안에서 냄. 받는 쪽은 `@TransactionalEventListener(AFTER_COMMIT)`(되돌려진 일은 받지 않음). 받는 쪽이 DB에 쓰려면 `@Transactional(propagation = REQUIRES_NEW)`(원래 트랜잭션은 이미 끝남). 해체는 길드원마다가 아니라 이벤트 하나. 지금 받는 쪽은 채팅 `ChatDisbandListener`(해체 → 그 길드 채팅 지움) 하나이고, 가입·탈퇴 이벤트는 받는 쪽이 없습니다(자리만) |
 | 웹서버 | 접속: `PresenceService.onlineOf(계정들)`, 바뀜 이벤트 `PresenceChangedEvent(계정, online)` | 이벤트는 연결 처리 스레드에서 바로 옴(트랜잭션 없음). 받는 쪽은 예외를 던지지 않음 |
 | 웹서버 | 게임에 알리기: `RealtimeNotifier.sendToGuild(길드 ID, 받는 사람, 메시지)` | 다른 서버에 붙은 사람에게도 감([realtime-relay](../flows/realtime-relay.md)). 메시지 종류는 realtime-api 표에 먼저 |
@@ -354,4 +354,4 @@ G1의 목록 항목, G2의 `guild`, G4의 `guild`(+ `myRole`)가 같은 필드�
 | 버전 | 날짜 | 내용 |
 |---|---|---|
 | v1 | 2026-10-16 | 초안: G1~G12(G10 내보내기는 Lv2 예정), 규칙(한 사람 하나·정원 30·상한 5·스테이지 1 클리어·이름 2~12자 대소문자 가림·신청 3곳 3일), 상태·권한 표, 판정 순서, 동시에 눌렀을 때, 한 번만 반영(기억이 지나면 지금 상태로 판정), 오류 열셋 |
-| v1.1 | 2026-10-16 | 구현 반영: 길드원 접속 바뀜 `PRESENCE_CHANGED`(realtime-api v1.5)가 Lv2로 들어가 G4 `members[].online` 설명과 "정할 것"에서 뺌. G10 내보내기·재가입 대기는 "예정(10/17)" → 보류. 상태 줄에 구현 PR. 구현과 대조해 빠진 설명 보탬: G1 `name` 규칙(첫 글자만 공백 불가, 빈 값은 전부), G3 `Location` 헤더와 응답으로 바로 그림, G4를 부르는 때(로그인 직후·다시 연결), 403·404·409 뒤 G4, 오류 문구의 기준(UE `WarriorErrorText`), 새 절 "다른 기능이 길드를 쓸 때". 10/17 채팅 병합(웹서버 #34) 뒤 다시 대조: G5 `Location` 헤더, G1 빈 `cursor=`는 400, 생애 이벤트를 지금 받는 쪽(채팅은 해체만). API 모양은 그대로 |
+| v1.1 | 2026-10-16 | 구현 반영: 길드원 접속 바뀜 `PRESENCE_CHANGED`(realtime-api v1.6)가 Lv2로 들어가 G4 `members[].online` 설명과 "정할 것"에서 뺌. G10 내보내기·재가입 대기는 "예정(10/17)" → 보류. 상태 줄에 구현 PR. 구현과 대조해 빠진 설명 보탬: G1 `name` 규칙(첫 글자만 공백 불가, 빈 값은 전부), G3 `Location` 헤더와 응답으로 바로 그림, G4를 부르는 때(로그인 직후·다시 연결), 403·404·409 뒤 G4, 오류 문구의 기준(UE `WarriorErrorText`), 새 절 "다른 기능이 길드를 쓸 때". 10/17 채팅 병합(웹서버 #34) 뒤 다시 대조: G5 `Location` 헤더, G1 빈 `cursor=`는 400, 생애 이벤트를 지금 받는 쪽(채팅은 해체만). API 모양은 그대로 |

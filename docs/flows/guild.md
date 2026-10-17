@@ -1,6 +1,6 @@
 # 길드 흐름 (M23)
 
-> 상태: 초안 · 명세: [guild-api.md](../contracts/guild-api.md) v1.1, [realtime-api.md 메시지 종류·길드 알림 처리·접속 표시 처리](../contracts/realtime-api.md#메시지-종류) v1.5 · Redis: [redis-keys.md 접속 상태·길드](../contracts/redis-keys.md#접속-상태v16) v1.7 · 서버 사이 전달: [realtime-relay.md](realtime-relay.md)
+> 상태: 초안 · 명세: [guild-api.md](../contracts/guild-api.md) v1.1, [realtime-api.md 메시지 종류·길드 알림 처리·접속 표시 처리](../contracts/realtime-api.md#메시지-종류) v1.6 · Redis: [redis-keys.md 접속 상태·길드](../contracts/redis-keys.md#접속-상태v17) v1.8 · 서버 사이 전달: [realtime-relay.md](realtime-relay.md)
 > 클래스·함수 이름은 구현 기준입니다(웹서버 #31·#33, 게임 #61·#62 — 10/17 `dev` 병합(웹서버 #37, 게임 #66). 10/16 대조·10/17 채팅 병합 뒤 다시 대조). 코드 이름이 바뀌면 이 문서를 같이 고칩니다.
 
 - ① 만들기 · ② 신청 → 길드장 알림 · ③ 수락(신청자가 다른 서버) · ④ 거절 · ⑤ 탈퇴 · ⑥ 해체 · ⑦ 같은 길드에 수락 둘이 동시에(정원) · ⑧ 접속 표시

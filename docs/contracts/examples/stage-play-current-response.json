@@ -5,7 +5,7 @@
     "stageId": "stage.01.01",
     "difficulty": 0,
     "waveCount": 5,
-    "waveVersion": "w1-m1",
+    "waveVersion": "w1-m1-d1",
     "waves": [
       {
         "waveNumber": 1,
@@ -20,7 +20,9 @@
             "boss": false,
             "spawnGroup": null,
             "goldReward": 3,
-            "goldDropChance": 1.0
+            "goldDropChance": 1.0,
+            "healthMultiplier": 1.0,
+            "damageMultiplier": 1.0
           }
         ]
       },
@@ -37,7 +39,9 @@
             "boss": false,
             "spawnGroup": null,
             "goldReward": 2,
-            "goldDropChance": 1.0
+            "goldDropChance": 1.0,
+            "healthMultiplier": 1.0,
+            "damageMultiplier": 1.0
           }
         ]
       },
@@ -54,7 +58,9 @@
             "boss": false,
             "spawnGroup": null,
             "goldReward": 2,
-            "goldDropChance": 1.0
+            "goldDropChance": 1.0,
+            "healthMultiplier": 1.0,
+            "damageMultiplier": 1.0
           },
           {
             "monsterId": "monster.archer",
@@ -62,7 +68,9 @@
             "boss": false,
             "spawnGroup": null,
             "goldReward": 3,
-            "goldDropChance": 1.0
+            "goldDropChance": 1.0,
+            "healthMultiplier": 1.0,
+            "damageMultiplier": 1.0
           }
         ]
       },
@@ -79,7 +87,9 @@
             "boss": false,
             "spawnGroup": null,
             "goldReward": 0,
-            "goldDropChance": 1.0
+            "goldDropChance": 1.0,
+            "healthMultiplier": 1.0,
+            "damageMultiplier": 1.0
           },
           {
             "monsterId": "monster.archer",
@@ -87,7 +97,9 @@
             "boss": false,
             "spawnGroup": null,
             "goldReward": 0,
-            "goldDropChance": 1.0
+            "goldDropChance": 1.0,
+            "healthMultiplier": 1.0,
+            "damageMultiplier": 1.0
           }
         ]
       },
@@ -104,7 +116,9 @@
             "boss": true,
             "spawnGroup": null,
             "goldReward": 0,
-            "goldDropChance": 1.0
+            "goldDropChance": 1.0,
+            "healthMultiplier": 1.0,
+            "damageMultiplier": 1.0
           },
           {
             "monsterId": "monster.samurai",
@@ -112,7 +126,9 @@
             "boss": false,
             "spawnGroup": null,
             "goldReward": 0,
-            "goldDropChance": 1.0
+            "goldDropChance": 1.0,
+            "healthMultiplier": 1.0,
+            "damageMultiplier": 1.0
           },
           {
             "monsterId": "monster.archer",
@@ -120,7 +136,9 @@
             "boss": false,
             "spawnGroup": null,
             "goldReward": 0,
-            "goldDropChance": 1.0
+            "goldDropChance": 1.0,
+            "healthMultiplier": 1.0,
+            "damageMultiplier": 1.0
           }
         ]
       }
