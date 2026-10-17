@@ -1,0 +1,7 @@
+{
+  "code": "CHAT_MUTED",
+  "message": "도배로 잠시 채팅을 쉽니다.",
+  "path": "/chats/guild",
+  "retryable": false,
+  "retryAfterSeconds": 60
+}

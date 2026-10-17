@@ -1,0 +1,7 @@
+{
+  "code": "CHAT_RATE_LIMITED",
+  "message": "채팅을 너무 빨리 보내고 있습니다. 잠시 뒤에 보내 주세요.",
+  "path": "/chats/global",
+  "retryable": false,
+  "retryAfterSeconds": 4
+}

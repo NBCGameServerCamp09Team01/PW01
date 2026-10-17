@@ -11,9 +11,10 @@
 | [result-api.md](result-api.md) | v1.2 | 초안 | Robbie | Robbie (리뷰: Sang-Hyun-Kim) |
 | [stage-api.md](stage-api.md) | v1.3 | 초안 | Sang-Hyun-Kim | Sang-Hyun-Kim (리뷰: Robbie) |
 | [stage-play-api.md](stage-play-api.md) | v1.3 | 초안 | Robbie | Sang-Hyun-Kim (리뷰: Robbie) |
-| [realtime-api.md](realtime-api.md) | v1.3 | 초안 | Juunnmmoo | Juunnmmoo (리뷰: Sang-Hyun-Kim 배정) |
+| [realtime-api.md](realtime-api.md) | v1.4 | 초안 | Juunnmmoo | Juunnmmoo (리뷰: Sang-Hyun-Kim 배정) |
 | [ranking-api.md](ranking-api.md) | v1 | 초안 | Sang-Hyun-Kim | Sang-Hyun-Kim (리뷰: Robbie) |
-| [redis-keys.md](redis-keys.md) | v1.5 | 합의(v1.3 랭킹 절·v1.4 체크포인트 키·v1.5 서버 사이 전달 채널 초안) | — | Sang-Hyun-Kim (리뷰: Robbie) |
+| [chat-api.md](chat-api.md) | v1 | 초안 | Robbie | Robbie (리뷰: Sang-Hyun-Kim) |
+| [redis-keys.md](redis-keys.md) | v1.6 | 합의(v1.3 랭킹 절·v1.4 체크포인트 키·v1.5 서버 사이 전달 채널·v1.6 채팅 키 초안) | — | Sang-Hyun-Kim (리뷰: Robbie) |
 
 - 상태: `작성 전` → `초안` → `합의` → `구현됨`
 - 요청·응답 JSON 예시는 [examples/](examples/) 에 둡니다.
@@ -140,6 +141,7 @@
 | 체크포인트 저장(C1) | Redis: 플레이당 하나를 덮어씀 + `clearedWave`가 뒤로 가지 않음. `requestId` 없음(같은 요청이 다시 와도 결과가 같음) | [stage-play-api.md C1](stage-play-api.md#c1-저장--put-accountsmestage-playsstageplayidcheckpoint) |
 | 스탯 투자 | Redis 처음 응답 + DB 변경 내역 | [stat-api.md](stat-api.md) "한 번만 반영" |
 | 스킬 해금 | 스탯 투자와 같은 방법(DB 마지막 방어: 계정 + 스킬 한 줄) | [skill-api.md](skill-api.md) "한 번만 반영" |
+| 채팅 보내기(전체·길드) | Redis 처음 응답(`pw01:idem`)만. DB 마지막 방어 없음 — 게임이 채팅을 보관·재전송하지 않으므로 기억 시간(24시간) 뒤 같은 요청이 오지 않음 | [chat-api.md](chat-api.md#한-번만-반영) |
 | 우편함(나중) | 스탯 투자와 같은 방법 | 그 명세 |
 
 - Redis 키·명령 순서·기억 시간은 [redis-keys.md](redis-keys.md) `pw01:idem`에 있습니다.

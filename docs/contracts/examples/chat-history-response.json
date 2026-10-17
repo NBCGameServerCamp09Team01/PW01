@@ -1,0 +1,28 @@
+{
+  "data": {
+    "messages": [
+      {
+        "messageId": "1042",
+        "scope": "GUILD",
+        "guildId": "7",
+        "senderAccountId": "12",
+        "senderNickname": "용사",
+        "text": "다들 스테이지 2 깼어요?",
+        "sentAt": "2026-10-17T05:00:00.120Z"
+      },
+      {
+        "messageId": "1031",
+        "scope": "GUILD",
+        "guildId": "7",
+        "senderAccountId": "57",
+        "senderNickname": "궁수",
+        "text": "저녁 9시에 같이 가요",
+        "sentAt": "2026-10-16T12:41:09.004Z"
+      }
+    ],
+    "nextCursor": "1031"
+  },
+  "meta": {
+    "requestId": "e91d3c47-2a6f-4b80-b5c2-7d14f0a8e963"
+  }
+}
