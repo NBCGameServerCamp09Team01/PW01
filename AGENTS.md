@@ -51,6 +51,7 @@
 | 영역 | 위치 | 요약 |
 |---|---|---|
 | 작업 공간 전체 | `docs/overview.md` | 구성 요소(게임 클라이언트·웹서버·MySQL·Redis)와 요청 흐름 |
+| AWS 배포 환경(팀원용) | `docs/aws-infra.md` | 배포 서버 구성 한 장, 낱말 풀이, 팀원에게 달라지는 것(UE ini 주소·서버 메모리에 상태 두지 않기·새 환경 변수 세 곳), 고른 이유 |
 | Git 규칙 | `docs/git-workflow.md` | 저장소별 기준 브랜치(Root `main`, 게임·웹서버 `dev`), 브랜치 이름, 커밋·PR 형식 |
 | 게임 ↔ 웹서버 약속 | `docs/contracts/README.md` | 명세 목록, 공통 API 규칙(경로는 기능 이름부터·버전 없음, 시각 UTC, 오류 응답 형식, 모르는 필드), 변경 절차 |
 | 기능 흐름도 | `docs/flows/` | 게임·웹서버를 오가는 기능의 경우별 sequenceDiagram(실제 클래스·함수 이름). `play-checkpoint.md`: 진행 중 스테이지 이어하기, `ops-health.md`: Actuator 상태 확인·요청 번호로 로그 찾기, `account-snapshot.md`: 계정 스냅샷 동기화, `deploy.md`: PR → `dev` 병합 → 이미지 → ECR |
