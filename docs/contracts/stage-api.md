@@ -1,8 +1,8 @@
 # 스테이지 API (Stage API)
 
-> 버전: v1.3 · 상태: 초안 · 호출: 게임 클라이언트(UE) → 웹서버 · 게임 담당: Sang-Hyun-Kim · 웹서버 담당: Sang-Hyun-Kim (리뷰: Robbie)
+> 버전: v1.4 · 상태: 초안 · 호출: 게임 클라이언트(UE) → 웹서버 · 게임 담당: Sang-Hyun-Kim · 웹서버 담당: Sang-Hyun-Kim (리뷰: Robbie)
 
-지역 → 스테이지 정의(모두에게 같음)와 내 진행(열림·잠김·클리어), 그리고 스테이지의 웨이브 구성·몬스터 정의입니다. 스테이지를 시작할 수 있는지는 스테이지 플레이 시작([stage-play-api.md](stage-play-api.md))에서 서버가 다시 확인합니다.
+지역 → 스테이지 정의(모두에게 같음)와 내 진행(열림·잠김·클리어), 그리고 스테이지의 웨이브 구성·몬스터 정의·난이도입니다. 스테이지를 시작할 수 있는지는 스테이지 플레이 시작([stage-play-api.md](stage-play-api.md))에서 서버가 다시 확인합니다.
 
 - 경로·시각·성공 응답 `{data, meta}`·오류 응답·요청 번호: [README.md 공통 규칙](README.md#공통-규칙)
 - 인증(토큰, 세션 연장, 401 네 종류): [auth-api.md 인증](auth-api.md#인증). 인증이 필요한 요청은 부를 때마다 세션이 연장됩니다
@@ -18,7 +18,7 @@
 
 - 서버는 키의 대소문자를 가립니다. UE `FName`은 대소문자를 가리지 않으므로 **소문자만 씁니다.** 게임은 서버 목록에서 받은 문자열을 그대로 보냅니다.
 - 게임은 키를 잘라 번호를 읽지 않습니다. 순서는 `order`, 해금은 `requires`로 정합니다.
-- 지역·스테이지·웨이브·몬스터 정의는 서버 리소스 파일에 있습니다([서버 정의 파일](#서버-정의-파일)). 서버는 기동할 때 검사하고 틀리면 뜨지 않습니다.
+- 지역·스테이지·웨이브·몬스터·난이도 정의는 서버 리소스 파일에 있습니다([서버 정의 파일](#서버-정의-파일)). 서버는 기동할 때 검사하고 틀리면 뜨지 않습니다.
 
 ## 서버 정의 파일
 
@@ -29,6 +29,7 @@
 | `master/stages.json` | 지역·스테이지(이름·순서·`requires`·`waveCount`·`recommendedClearSeconds`) | 없음 |
 | `master/stage-waves.json` | 스테이지마다 웨이브 구성. `stageId`로 `stages.json`과 이어짐 | 있음 |
 | `master/monsters.json` | 몬스터 정의(이름·보스 여부·기본 골드) | 있음 |
+| `master/difficulties.json` | 난이도 목록(이름·랭킹 점수 배수)과 **기본 배율** | 있음 |
 
 **`stage-waves.json`**
 
@@ -37,13 +38,15 @@
 | `version` | integer | 예 | 파일 버전(1 이상). 값을 바꾸면 1 올립니다 |
 | `stages[].stageId` | string | 예 | `stages.json`의 스테이지 키 |
 | `stages[].waves` | array | 예 | 웨이브 목록. **순서가 웨이브 번호**(1부터). 1개 이상 |
+| `stages[].difficultyMultipliers` | object | 아니오 | 이 스테이지에서만 난이도 배율을 덮어씁니다([난이도](#난이도)). 키 = 난이도 번호 문자열(`"1"`, `"2"`…, **`"0"`은 안 됨**), 값 = 배율 칸 중 바꿀 칸만(`enemyCountMultiplier`·`enemyHealthMultiplier`·`enemyDamageMultiplier`·`goldAmountMultiplier`, 0보다 큼) |
 | `waves[].restSeconds` | number | 아니오 | 이 웨이브 앞 쉬는 시간(초, 0 이상). 0이거나 없으면 게임 기본 쉬는 시간. 1웨이브 앞은 준비 시간이라 쓰지 않습니다 |
 | `waves[].bossWave` | boolean | 아니오 | 보스 웨이브. 없으면 false |
 | `waves[].goldChanceMultiplier` | number | 아니오 | 이 웨이브의 골드 확률 배율(0 이상). 없으면 1.0 |
 | `waves[].goldAmountMultiplier` | number | 아니오 | 이 웨이브의 골드 양 배율(0 이상). 없으면 1.0 |
 | `waves[].enemies` | array | 예 | 나올 적. 1줄 이상 |
 | `enemies[].monsterId` | string | 예 | `monsters.json`의 몬스터 키 |
-| `enemies[].count` | integer | 예 | 마리 수(1 이상) |
+| `enemies[].count` | integer | 예 | 마리 수(1 이상). 난이도 0의 마리 수이자 다른 난이도 계산의 바탕([난이도](#난이도)) |
+| `enemies[].countByDifficulty` | object | 아니오 | 이 줄의 난이도별 마리 수를 직접 정합니다. 키 = 난이도 번호 문자열(1 이상), 값 = 마리 수(1 이상). **그 난이도부터** 적용(계단식). 있으면 이 줄에는 마리 수 배율을 곱하지 않습니다 |
 | `enemies[].spawnGroup` | string | 아니오 | 스폰 그룹 이름. 위치는 레벨(UE)이 정합니다. 없으면 기본 스폰 |
 | `enemies[].boss` · `goldReward` · `goldDropChance` | | 아니오 | 이 줄에서만 몬스터 정의 값을 덮어씁니다. 없으면 `monsters.json` 값 |
 
@@ -58,14 +61,53 @@
 | `monsters[].goldReward` | integer | 예 | 한 마리 골드(0 이상) |
 | `monsters[].goldDropChance` | number | 예 | 골드를 떨굴 확률(0~1) |
 
-**웨이브 정보 버전 `waveVersion`**: `"w{stage-waves.json version}-m{monsters.json version}"`(예: `w1-m1`). 웨이브 구성이나 몬스터 값을 바꾸면 달라집니다. 스테이지 플레이에 시작 때 값이 저장되어 "어느 구성으로 한 판인가"를 알 수 있습니다. 체크포인트의 `contentVersion`(판 안 값 모양, 게임이 정함)과는 다른 값입니다.
+**`difficulties.json`**
+
+| 칸 | 타입 | 필수 | 설명 |
+|---|---|---|---|
+| `version` | integer | 예 | 파일 버전(1 이상). 값을 바꾸면 1 올립니다 |
+| `difficulties[].difficulty` | integer | 예 | 난이도 번호. 0부터 빈틈없이. 스테이지 플레이·결과·랭킹의 `difficulty`와 같은 값 |
+| `difficulties[].name` | string | 예 | 화면 이름 |
+| `difficulties[].enemyCountMultiplier` | number | 예 | 기본 마리 수 배율(0보다 큼) |
+| `difficulties[].enemyHealthMultiplier` | number | 예 | 기본 적 체력 배율(0보다 큼) |
+| `difficulties[].enemyDamageMultiplier` | number | 예 | 기본 적 공격력 배율(0보다 큼) |
+| `difficulties[].goldAmountMultiplier` | number | 예 | 기본 골드 양 배율(0보다 큼) |
+| `difficulties[].scoreMultiplierPercent` | integer | 예 | 랭킹 점수 배수(%, 1 이상, [ranking-api.md 점수](ranking-api.md#점수)). 모든 스테이지 공통 |
+
+- **난이도 0은 "난이도 조절 없음"**입니다. 배율은 모두 1.0, 점수 배수는 100이어야 하고 스테이지에서 덮어쓸 수 없습니다. v1.4 전에 시작한 플레이·결과·랭킹은 모두 난이도 0입니다.
+- 지금 난이도: 0 이지, 1 노말, 2 하드(이름과 배율은 파일 값).
+
+### 난이도
+
+난이도는 **나오는 몬스터 종류는 그대로 두고 마리 수와 능력치만** 바꿉니다. 서버가 스테이지 플레이를 시작할 때 그 난이도의 값을 웨이브 구성에 반영해 플레이에 고정합니다([stage-play-api.md 웨이브 구성](stage-play-api.md#웨이브-구성)). 게임은 난이도 숫자로 계산하지 않고 받은 구성을 씁니다.
+
+**그 스테이지의 배율**: 칸마다 `stage-waves.json`의 그 스테이지 `difficultyMultipliers[난이도]`에 있으면 그 값, 없으면 `difficulties.json`의 그 난이도 값입니다(칸 단위 덮어쓰기).
+
+**적 한 줄의 난이도 d 마리 수**
+
+| 줄 | 마리 수 |
+|---|---|
+| `countByDifficulty`가 없음(배율 줄) | 보스 줄(`boss` true)은 `count` 그대로. 나머지는 `max(1, round(count × 그 스테이지의 enemyCountMultiplier))`. 반올림은 0.5 올림 |
+| `countByDifficulty`가 있음(직접 수 줄) | d 이하에서 가장 큰 키의 값. 그런 키가 없으면 `count`. 배율을 곱하지 않습니다 |
+
+예: `{"count": 3, "countByDifficulty": {"1": 4, "2": 5}}` → 0: 3, 1: 4, 2: 5, 난이도 3을 더하면 3: 5(이어받음). `{"count": 2, "countByDifficulty": {"2": 3}}` → 0: 2, 1: 2, 2: 3.
+
+**그 밖의 반영**
+- 웨이브 골드 양 배율 = 웨이브 `goldAmountMultiplier` × 그 스테이지의 `goldAmountMultiplier`. 웨이브 골드 확률 배율은 그대로
+- 적 줄마다 `healthMultiplier` = 그 스테이지의 `enemyHealthMultiplier`, `damageMultiplier` = 그 스테이지의 `enemyDamageMultiplier`. 게임이 그 적을 만들 때 체력(최대·현재)과 공격력에 곱합니다
+- 웨이브 수(`waveCount`)와 줄(몬스터 종류)은 난이도와 상관없이 같습니다
+
+**웨이브 정보 버전 `waveVersion`**: `"w{stage-waves.json version}-m{monsters.json version}-d{difficulties.json version}"`(예: `w2-m2-d1`). 웨이브 구성·몬스터·난이도 값을 바꾸면 달라집니다. v1.4 전에 시작한 플레이는 `w{n}-m{n}` 모양 그대로입니다. 스테이지 플레이에 시작 때 값이 저장되어 "어느 구성으로 한 판인가"를 알 수 있습니다. 체크포인트의 `contentVersion`(판 안 값 모양, 게임이 정함)과는 다른 값입니다.
 
 **서버 기동 검사** (하나라도 틀리면 서버가 뜨지 않음)
 
 - 몬스터: 키 모양, 중복 없음, `goldReward` ≥ 0, `goldDropChance` 0~1
 - 두 파일 맞춤: `stages.json`의 모든 스테이지가 `stage-waves.json`에 정확히 한 번 있고, `stage-waves.json`에만 있는 스테이지가 없음
 - 스테이지마다: `waves` 1개 이상, **`waveCount` = `waves` 수**, 웨이브마다 적 1줄 이상, 모르는 `monsterId` 없음, `count` ≥ 1, 배율 ≥ 0, 덮어쓴 골드·확률도 위 범위
-- `version` ≥ 1
+- 난이도: 번호 0부터 빈틈없이·중복 없음, 0이 있음, 0의 배율 모두 1.0·점수 배수 100, 배율 > 0, 점수 배수 ≥ 1, 이름 비어 있지 않음
+- `countByDifficulty`: 키는 있는 난이도이고 1 이상, 값 ≥ 1
+- `difficultyMultipliers`: 키는 있는 난이도이고 1 이상, 값 > 0. 배율 네 칸 말고 다른 칸(예: `name`)은 파일 읽기 실패
+- 세 파일 모두 `version` ≥ 1
 
 ## 엔드포인트
 
@@ -86,7 +128,10 @@
 | 필드 | 타입 | 설명 |
 |---|---|---|
 | `totalCount` | integer | 전체 스테이지 수 |
-| `waveVersion` | string | 지금 서버의 웨이브 정보 버전(예: `w1-m1`) |
+| `waveVersion` | string | 지금 서버의 웨이브 정보 버전(예: `w2-m2-d1`) |
+| `difficulties` | array | 난이도 목록. 번호 순 |
+| `difficulties[].difficulty` | integer | 난이도 번호. 0부터 |
+| `difficulties[].name` | string | 화면 이름 |
 | `monsters` | array | 몬스터 정의(미리보기 이름용). `monsters.json` 순서 |
 | `monsters[].monsterId` | string | 몬스터 키 |
 | `monsters[].name` | string | 화면 이름 |
@@ -102,16 +147,21 @@
 | `stages[].requires` | string \| null | 이 스테이지를 클리어하면 열립니다. 첫 스테이지는 `null`(칸은 늘 있음). 잠김 안내 문구에 씁니다 |
 | `stages[].waveCount` | integer | 웨이브 수 |
 | `stages[].recommendedClearSeconds` | integer | 권장 클리어 시간(초, 1 이상). 랭킹 점수의 기준입니다([ranking-api.md 점수](ranking-api.md#점수)). 게임에 시간 제한은 없습니다 |
+| `stages[].multipliers` | array | 이 스테이지에서 실제로 쓰는 난이도 배율(덮어쓰기 반영). 난이도 번호 순, 길이는 난이도 수 |
+| `multipliers[].difficulty` | integer | 난이도 번호 |
+| `multipliers[].enemyCountMultiplier` · `enemyHealthMultiplier` · `enemyDamageMultiplier` · `goldAmountMultiplier` | number | 그 난이도의 배율(안내 문구용. 마리 수는 아래 `counts`가 이미 반영) |
 | `stages[].waves` | array | 웨이브 미리보기. 웨이브 번호 순, 길이는 `waveCount` |
 | `waves[].waveNumber` | integer | 웨이브 번호. 1부터 |
 | `waves[].bossWave` | boolean | 보스 웨이브 |
 | `waves[].enemies` | array | 나올 적 |
 | `enemies[].monsterId` | string | 몬스터 키. 이름은 `monsters`에서 찾습니다 |
-| `enemies[].count` | integer | 마리 수 |
+| `enemies[].count` | integer | 난이도 0의 마리 수(= `counts[0]`) |
+| `enemies[].counts` | integer[] | 난이도별 마리 수(서버가 계산한 값, [난이도](#난이도)). 난이도 번호 순, 모두 1 이상 |
 | `enemies[].boss` | boolean | 이 줄이 보스인가(덮어쓰기 반영) |
 
 - 미리보기에는 골드·확률·쉬는 시간을 싣지 않습니다. 실제 판의 구성은 스테이지 플레이 응답의 `waves`(시작 때 고정, 골드 포함)입니다.
 - 게임은 몬스터 이름을 `monsters`에서 찾고, 없으면 키를 그대로 보입니다.
+- 게임은 고른 난이도의 `counts[d]`·`multipliers[d]`를 보입니다. 마리 수를 직접 계산하지 않습니다(반올림·계단식 규칙이 서버에만 있음).
 
 | 상태 코드 | 의미 | 본문 |
 |---|---|---|
@@ -152,13 +202,29 @@
 
 | 때 | 서버가 하는 일 |
 |---|---|
-| 스테이지 플레이 시작 | 요청의 `stageId`가 없는 키면 `STAGE_NOT_FOUND`, 아직 열리지 않았으면 `STAGE_LOCKED`로 거절합니다. 통과하면 그 스테이지와 **그때의 `waveCount`·웨이브 구성(몬스터 값을 풀어 둔 것)·`waveVersion`**을 스테이지 플레이에 저장합니다 |
+| 스테이지 플레이 시작 | 요청의 `stageId`가 없는 키면 `STAGE_NOT_FOUND`, 아직 열리지 않았으면 `STAGE_LOCKED`로 거절합니다. 통과하면 그 스테이지와 **그때의 `waveCount`·웨이브 구성(몬스터 값과 그 난이도를 반영한 것)·`waveVersion`**을 스테이지 플레이에 저장합니다. 스테이지가 열려 있으면 모든 난이도로 시작할 수 있습니다 |
 | 결과 검사 | 결과 본문의 `stageId`가 스테이지 플레이에 저장한 스테이지와 다르면 거절합니다. 웨이브 기준은 **스테이지 플레이에 저장한 `waveCount`**입니다. 도달 웨이브는 0 이상 `waveCount` 이하이고, 클리어면 `waveCount`와 같아야 합니다. 게임이 보낸 전체 웨이브 수는 검사에 쓰지 않습니다. 거절 코드는 result-api.md에 있습니다 |
 | 결과 저장 | 클리어 결과가 받아들여지면, 결과·보상과 **같이** 그 스테이지가 클리어로 기록됩니다. 기록하는 스테이지는 스테이지 플레이에 저장한 값입니다. 같은 스테이지 플레이의 재전송은 진행을 다시 바꾸지 않습니다 |
 
 - 스테이지 플레이에 웨이브 수·구성을 저장하는 이유: 유효 시간(24시간) 사이에 서버 정의가 바뀌어도, 보관했다 다시 보낸 결과가 거절되지 않고 **이어한 판이 처음과 같은 적**으로 진행되게 하려고입니다.
-- 게임의 시작 요청에는 선택 화면에서 고른 스테이지 키(`AWarriorStageGameMode`가 정한 값)를 보냅니다. 레벨 이름이 가면 `STAGE_NOT_FOUND`입니다. 난이도(`difficulty`, 선택 칸)는 지금 0(난이도 조절 없음)만 받습니다.
+- 게임의 시작 요청에는 선택 화면에서 고른 스테이지 키(`AWarriorStageGameMode`가 정한 값)를 보냅니다. 레벨 이름이 가면 `STAGE_NOT_FOUND`입니다. 난이도(`difficulty`, 선택 칸, 없으면 0)는 `difficulties.json`에 있는 번호만 받습니다(없는 번호는 400 `VALIDATION_FAILED`).
 - 웨이브 구성의 원본은 서버 `master/stage-waves.json`입니다(v1.3부터, 그 전에는 UE DataAsset이 원본이고 `waveCount`는 손 사본이었음). 웨이브 수를 바꾸면 `stage-waves.json`의 `waves`와 `stages.json`의 `waveCount`를 함께 고칩니다(어긋나면 서버가 뜨지 않습니다).
+
+## 서버 정의 바꾸기
+
+| 바꾸고 싶은 것 | 고칠 곳 |
+|---|---|
+| 난이도의 세기(모든 스테이지) | `difficulties.json` 그 난이도의 배율 |
+| 한 스테이지만 난이도 배율 다르게 | `stage-waves.json` 그 스테이지 `difficultyMultipliers`(바꿀 칸만) |
+| 한 줄의 난이도별 마리 수를 정확히 | `stage-waves.json` 그 적 줄 `countByDifficulty` |
+| 나오는 몬스터 종류·웨이브 | `stage-waves.json` 웨이브·적 줄(모든 난이도가 같이 바뀜) |
+| 새 난이도 | `difficulties.json`에 줄 하나(다음 번호). 다르게 할 스테이지·줄에만 새 키. 나머지는 자동(배율 줄은 새 배율, 직접 수 줄은 아래 난이도 값을 이어받음) |
+| 몬스터 기본 골드·이름 | `monsters.json` |
+| 새 몬스터 | 게임 몬스터 카탈로그(키 → BP)를 먼저 배포한 뒤 `monsters.json`·`stage-waves.json`. 순서가 바뀌면 그 스테이지를 시작하지 못합니다([stage-play-api.md 웨이브 구성](stage-play-api.md#웨이브-구성)) |
+| 몬스터 기본 체력·공격력 | 서버가 아니라 UE 에셋. 서버 배율은 이 값에 곱해집니다 |
+
+- 바꾼 파일의 `version`을 1 올립니다(`waveVersion`이 달라짐). 서버는 기동할 때 파일을 읽으므로 다시 띄워야 반영되고, **새로 시작하는 플레이부터** 적용됩니다(진행 중·이어하기는 시작 때 구성).
+- 난이도는 빼지 않습니다. 지난 플레이와 랭킹(`d<난이도>` 보드)이 그 번호를 가집니다.
 
 ## 오류
 
@@ -183,3 +249,4 @@
 | v1.1 | 2026-10-09 | 판 시작(`POST /runs`)·결과(`/runs/{runId}/result`)를 스테이지 플레이 API([stage-play-api.md](stage-play-api.md))와 새 결과 경로로 바꿈. "판"·"판 번호" 표기를 스테이지 플레이·스테이지 플레이 ID로. 예시 오류의 `path`. 동작·칸은 그대로 |
 | v1.2 | 2026-10-12 | ST1 `stages[].recommendedClearSeconds`(권장 클리어 시간, 랭킹 점수 기준) 칸 추가, 오류 `REGION_NOT_FOUND`(랭킹 지역 순위). 응답 칸 추가라 호환 |
 | v1.3 | 2026-10-14 | 웨이브 구성·몬스터 정의의 원본을 서버 파일로(M24): 몬스터 키 규칙, 서버 정의 파일 절(`stage-waves.json`·`monsters.json`, 덮어쓰기, `waveVersion` = `w{n}-m{n}`, 기동 검사). ST1에 `waveVersion`·`monsters`·`stages[].waves`(미리보기) 추가. 시작 때 구성·`waveVersion`도 플레이에 저장. "`waveCount`는 손 사본" 문장 고침. 응답 칸 추가라 호환 |
+| v1.4 | 2026-10-15 | 난이도(M9): `master/difficulties.json`(이름·점수 배수·기본 배율, 0 = 조절 없음), `stage-waves.json`의 `difficultyMultipliers`(스테이지별 배율 덮어쓰기)·`countByDifficulty`(줄별 마리 수, 계단식), "난이도" 절(마리 수·배율 계산), `waveVersion` = `w{n}-m{n}-d{n}`, 기동 검사. ST1에 `difficulties`·`stages[].multipliers`·`enemies[].counts` 추가, `enemies[].count`는 난이도 0 값. 시작은 `difficulties.json`에 있는 난이도만. "서버 정의 바꾸기" 절. 응답 칸 추가라 호환 |
