@@ -1,13 +1,13 @@
 # 길드 API (Guild API)
 
-> 버전: v1 · 상태: 초안 · 호출: 게임 클라이언트(UE) → 웹서버 · 게임 담당: Sang-Hyun-Kim · 웹서버 담당: Sang-Hyun-Kim (리뷰: 채팅 담당)
+> 버전: v1.1 · 상태: 초안(G1~G9·G11·G12 구현: 웹서버 #31·#33·#37, 게임 #61·#62·#66 — 둘 다 `dev`에 병합됨(10/17)) · 호출: 게임 클라이언트(UE) → 웹서버 · 게임 담당: Sang-Hyun-Kim · 웹서버 담당: Sang-Hyun-Kim (리뷰: 채팅 담당)
 
 길드를 찾고, 만들고, 가입을 신청하고, 길드장이 신청을 받거나 거절하고, 길드원이 나가거나 길드장이 길드를 해체합니다. 한 사람은 길드 하나에만 들 수 있습니다. 같은 요청이 두 번 와도 한 번만 반영하고, 여러 사람이 동시에 눌러도 정원·한 사람 한 길드·길드 수 상한을 지킵니다.
 
 - 경로·시각·성공 응답 `{data, meta}`·오류 응답·요청 번호: [README.md 공통 규칙](README.md#공통-규칙)
 - 다시 보내기·한 번만 반영: [README.md 상태를 바꾸는 요청과 재전송](README.md#상태를-바꾸는-요청과-재전송). 길드만의 차이는 아래 [한 번만 반영](#한-번만-반영)
 - 인증(토큰, 세션 연장, 401 네 종류): [auth-api.md 인증](auth-api.md#인증). 아래 API는 모두 인증이 필요합니다
-- 길드 실시간 알림(`GUILD_*`): [realtime-api.md](realtime-api.md#메시지-종류)
+- 길드 실시간 알림(`GUILD_*`)·길드원 접속 바뀜(`PRESENCE_CHANGED`): [realtime-api.md](realtime-api.md#메시지-종류) v1.5
 - 길드 채팅은 이 명세에 없습니다(채팅 명세). 길드는 채팅이 쓸 소속 정보만 줍니다
 - 아래 "응답 `data`" 표는 성공 응답의 `data` 안쪽 모양입니다.
 
@@ -24,12 +24,12 @@
 | G7 | GET | `/accounts/me/guild/join-requests` | 길드장 | 200 | 받은 신청 목록 |
 | G8 | POST | `/accounts/me/guild/join-requests/{joinRequestId}/approve` | 길드장 | 200 | 신청 수락 |
 | G9 | POST | `/accounts/me/guild/join-requests/{joinRequestId}/reject` | 길드장 | 200 | 신청 거절 |
-| G10 | POST | `/accounts/me/guild/members/{accountId}/kick` | 길드장 | 200 | 내보내기 — **예정(Lv2, 10/17)**. 그 전에는 404 `NOT_FOUND`(없는 경로) |
+| G10 | POST | `/accounts/me/guild/members/{accountId}/kick` | 길드장 | 200 | 내보내기 — **보류(Lv2)**. 구현 전에는 404 `NOT_FOUND`(없는 경로) |
 | G11 | POST | `/accounts/me/guild/leave` | 길드원 | 200 | 탈퇴(길드장이 혼자면 해체) |
 | G12 | POST | `/accounts/me/guild/disband` | 길드장 | 200 | 해체 |
 
 - 공개 정보는 `/guilds…`, 내 소속·신청처럼 "나"에 관한 것은 `/accounts/me/guild…`·`/accounts/me/guild-join-requests…`입니다.
-- 게임은 길드 화면을 열 때와 길드 실시간 알림을 받을 때 G4 하나로 화면 전체를 다시 그립니다. 다른 API의 응답은 "성공했다"는 확인으로 쓰고, 화면은 G4로 맞춥니다.
+- 게임은 길드 화면을 열 때와 길드 실시간 알림을 받을 때 G4 하나로 화면 전체를 다시 그립니다. 다른 API의 응답은 "성공했다"는 확인으로 쓰고, 화면은 G4로 맞춥니다(G3 만들기만 응답이 G4 모양이라 바로 씀). 403·404·409가 와도 그사이 상태가 바뀐 것이므로 G4를 다시 받습니다.
 
 ## 규칙
 
@@ -47,7 +47,7 @@
 | 거절되면 | 바로 다시 신청 가능 | |
 | 길드장 탈퇴 | 다른 길드원이 있으면 불가(409), 혼자면 해체 | 길드장 넘기기는 없음 |
 | 해체 | 길드장만, 즉시 | 길드원은 모두 미소속, 받은 신청은 모두 지워짐, 이름은 다시 쓸 수 있음 |
-| 재가입 대기 | 없음(Lv2에서 설정 값으로 켤 수 있게 함, 기본 꺼짐) | |
+| 재가입 대기 | 없음(Lv2 보류. 설정 값 자리만 있고 기본 꺼짐) | |
 
 ### 상태와 권한
 
@@ -65,7 +65,7 @@
 
 ### 길드 요약 `GuildSummary`
 
-G1의 목록 줄, G2의 `guild`, G4의 `guild`(+ `myRole`)가 같은 칸을 씁니다.
+G1의 목록 항목, G2의 `guild`, G4의 `guild`(+ `myRole`)가 같은 필드를 씁니다.
 
 | 필드 | 타입 | 설명 |
 |---|---|---|
@@ -97,8 +97,8 @@ G1의 목록 줄, G2의 `guild`, G4의 `guild`(+ `myRole`)가 같은 칸을 씁�
 
 | 이름 | 타입 | 기본 | 규칙 |
 |---|---|---|---|
-| `name` | string | 없음(전부) | 이름 앞부분. 길드 이름에 쓸 수 있는 글자만, 1~12자. 아니면 400 `VALIDATION_FAILED`(`errors`에 `name`) |
-| `cursor` | string | 없음(가장 최근부터) | 앞 응답의 `nextCursor` **그대로**. 모양에 기대지 않습니다. 잘못된 값은 400 `VALIDATION_FAILED`(`errors`에 `cursor`) |
+| `name` | string | 없음(전부). 빈 값(`name=`)도 전부 | 이름 앞부분. 한글(완성형)·영문·숫자·공백 1~12자, 첫 글자는 공백이 아님(입력 중인 앞부분이라 끝 공백·연속 공백은 받음). 아니면 400 `VALIDATION_FAILED`(`errors`에 `name`) |
+| `cursor` | string | 없음(가장 최근부터) | 앞 응답의 `nextCursor` **그대로**. 모양에 기대지 않습니다. 잘못된 값은 400 `VALIDATION_FAILED`(`errors`에 `cursor`). `name`과 달리 빈 값(`cursor=`)도 400이므로, 처음 묶음은 `cursor`를 빼고 보냅니다 |
 | `size` | integer | 20 | 1~50. 밖이면 400 `VALIDATION_FAILED`(`errors`에 `size`) |
 
 응답 `data`
@@ -149,7 +149,7 @@ G1의 목록 줄, G2의 `guild`, G4의 `guild`(+ `myRole`)가 같은 칸을 씁�
 - 같은 이름을 동시에 둘이 만들면 하나만 201, 나머지는 409 `GUILD_NAME_DUPLICATED`. 상한 직전에 동시에 만들면 상한까지만 201, 나머지는 409 `GUILD_LIMIT_REACHED`.
 - 다른 저장과 계속 부딪히면 409 `VERSION_CONFLICT`(`retryable: true`) — 아래 [동시에 눌렀을 때](#동시에-눌렀을-때).
 
-응답: **201**, `data`는 [G4](#g4-내-길드--get-accountsmeguild)와 같은 모양(만든 뒤 내 길드). 예시: `examples/guild-me-response.json`
+응답: **201** + 헤더 `Location: /accounts/me/guild`, `data`는 [G4](#g4-내-길드--get-accountsmeguild)와 같은 모양(만든 뒤 내 길드). 게임은 이 응답으로 바로 화면을 그리고 G4를 따로 부르지 않습니다. 예시: `examples/guild-me-response.json`
 
 ### 조건 미충족 응답
 
@@ -165,7 +165,7 @@ G1의 목록 줄, G2의 `guild`, G4의 `guild`(+ `myRole`)가 같은 칸을 씁�
 
 ## G4. 내 길드 — `GET /accounts/me/guild`
 
-길드 팝업을 열 때, 길드 실시간 알림을 받았을 때, 쓰기 요청이 끝났을 때 부릅니다. **늘 200**입니다(미소속도).
+로그인 직후(채팅이 내 길드 ID를 쓰므로 팝업과 상관없이), 길드 팝업을 열 때, 길드 실시간 알림을 받았을 때(0.5초 모아 한 번), 실시간이 다시 연결됐을 때, 쓰기 요청이 끝났을 때 부릅니다. **늘 200**입니다(미소속도).
 
 응답 `data`
 
@@ -177,12 +177,12 @@ G1의 목록 줄, G2의 `guild`, G4의 `guild`(+ `myRole`)가 같은 칸을 씁�
 | `members[].nickname` | string | 닉네임 |
 | `members[].role` | string | `LEADER` · `MEMBER` |
 | `members[].joinedAt` | string(UTC) | 들어온 시각 |
-| `members[].online` | boolean | 지금 실시간 연결이 있나(서버 어느 대든). 끊긴 뒤 최대 150초까지 `true`로 남을 수 있음 |
+| `members[].online` | boolean | 지금 실시간 연결이 있나(서버 어느 대든). 이 응답 뒤에는 실시간 `PRESENCE_CHANGED`로 바뀜([realtime-api.md 접속 표시 처리](realtime-api.md#접속-표시-처리)). 서버가 갑자기 꺼지면 최대 150초까지 `true`로 남을 수 있음 |
 | `pendingJoinRequestCount` | integer | 받은 대기 중 신청 수. 길드장이 아니면 0 |
 | `myJoinRequests[]` | `JoinRequest`[] | 내 대기 중 신청(유효 기간 안, 오래된 순). 길드원이면 `[]` |
 | `create.allowed` | boolean | 지금 길드를 만들 수 있나: 미소속이고 `requirements`가 모두 충족. 길드 수 상한은 넣지 않습니다(만들 때 판정) |
 | `create.requirements[]` | array | [조건 미충족 응답](#조건-미충족-응답)과 같은 모양 |
-| `rejoinAvailableAt` | string(UTC) \| null | 재가입 대기가 끝나는 시각. 지금은 늘 `null`(Lv2) |
+| `rejoinAvailableAt` | string(UTC) \| null | 재가입 대기가 끝나는 시각. 지금은 늘 `null`(재가입 대기는 Lv2 보류) |
 
 예시: `examples/guild-me-response.json`(길드장), `examples/guild-me-response-none.json`(미소속, 신청 하나)
 
@@ -206,9 +206,9 @@ G1의 목록 줄, G2의 `guild`, G4의 `guild`(+ `myRole`)가 같은 칸을 씁�
 | 4 | 같은 길드에 대기 중 신청이 있음 | 409 `GUILD_JOIN_REQUEST_DUPLICATED`(유효 기간이 지난 신청은 지우고 새로 받음) |
 | 5 | 대기 중 신청이 이미 3곳 | 409 `GUILD_JOIN_REQUEST_LIMIT` |
 | 6 | 길드 정원이 참 | 409 `GUILD_FULL`(안내용. 진짜 판정은 수락 때) |
-| 7 | 저장 | 신청 한 줄. 커밋 뒤 길드장에게 `GUILD_JOIN_REQUESTED` |
+| 7 | 저장 | 신청 행 하나. 커밋 뒤 길드장에게 `GUILD_JOIN_REQUESTED` |
 
-응답: **201**, `data`는 `JoinRequest` 하나. 예시: `examples/guild-join-request-response.json`
+응답: **201** + 헤더 `Location: /accounts/me/guild-join-requests/{joinRequestId}`(G6 취소 경로), `data`는 `JoinRequest` 하나. 예시: `examples/guild-join-request-response.json`
 
 ## G6. 신청 취소 — `DELETE /accounts/me/guild-join-requests/{joinRequestId}`
 
@@ -238,7 +238,7 @@ G1의 목록 줄, G2의 `guild`, G4의 `guild`(+ `myRole`)가 같은 칸을 씁�
 
 | 필드 | 타입 | 설명 |
 |---|---|---|
-| `member` | object | 새 길드원(G4 `members[]` 한 줄 모양) |
+| `member` | object | 새 길드원(G4 `members[]` 항목 하나와 같은 모양) |
 | `memberCount` | integer | 반영 뒤 길드원 수 |
 
 ## G9. 신청 거절 — `POST /accounts/me/guild/join-requests/{joinRequestId}/reject`
@@ -247,7 +247,7 @@ G1의 목록 줄, G2의 `guild`, G4의 `guild`(+ `myRole`)가 같은 칸을 씁�
 
 응답 `data`: `{ "joinRequestId": "…" }`
 
-## G10. 내보내기 — `POST /accounts/me/guild/members/{accountId}/kick` (예정, Lv2)
+## G10. 내보내기 — `POST /accounts/me/guild/members/{accountId}/kick` (보류, Lv2)
 
 요청: `{ "requestId": "…" }`. 403 둘 → 자기 자신이면 400 `VALIDATION_FAILED`(`errors`에 `accountId`) → 대상이 내 길드원이 아니면 404 `GUILD_MEMBER_NOT_FOUND` → 대상 미소속, 인원 −1. 커밋 뒤 `GUILD_MEMBER_LEFT`(`reason: KICKED`).
 
@@ -307,7 +307,7 @@ G1의 목록 줄, G2의 `guild`, G4의 `guild`(+ `myRole`)가 같은 칸을 씁�
 
 ## 오류
 
-이 명세만의 오류 코드입니다. 공통 오류는 [README.md 오류 코드](README.md#오류-코드)에 있습니다. 모두 `retryable: false`입니다.
+이 명세만의 오류 코드입니다. 공통 오류는 [README.md 오류 코드](README.md#오류-코드)에 있습니다. 모두 `retryable: false`입니다. 게임에 보이는 문구와 보이는 곳(팝업·팝업 안 문구·이름 칸)의 기준은 UE `WarriorErrorText.cpp` d 구역(맥락 `Guild`)입니다. 아래 "게임 쪽 처리"는 그 요약입니다.
 
 | 코드 | HTTP | 상황 | 게임 쪽 처리(제안) |
 |---|---|---|---|
@@ -327,17 +327,31 @@ G1의 목록 줄, G2의 `guild`, G4의 `guild`(+ `myRole`)가 같은 칸을 씁�
 
 예시: `examples/guild-error-full.json`
 
+## 다른 기능이 길드를 쓸 때
+
+길드 채팅·친구처럼 "누가 어느 길드인가"가 필요한 기능은 아래만 씁니다. 길드 표·잠금을 직접 다루지 않습니다.
+
+| 어디 | 쓰는 것 | 주의 |
+|---|---|---|
+| 웹서버 | `common/chat/GuildDirectory`: `guildIdOf(계정)`·`isMember(길드, 계정)`·`memberIds(길드)` | 매번 MySQL에서 읽음(캐시 없음, [redis-keys.md 길드](redis-keys.md#길드v16)). 길드 ID는 숫자 문자열 |
+| 웹서버 | 길드 생애 이벤트 `GuildMemberJoinedEvent`·`GuildMemberLeftEvent`(`reason` `LEFT`·`KICKED`)·`GuildDisbandedEvent`(해체 직전 길드원 목록 포함) | 길드 트랜잭션 안에서 냄. 받는 쪽은 `@TransactionalEventListener(AFTER_COMMIT)`(되돌려진 일은 받지 않음). 받는 쪽이 DB에 쓰려면 `@Transactional(propagation = REQUIRES_NEW)`(원래 트랜잭션은 이미 끝남). 해체는 길드원마다가 아니라 이벤트 하나. 지금 받는 쪽은 채팅 `ChatDisbandListener`(해체 → 그 길드 채팅 지움) 하나이고, 가입·탈퇴 이벤트는 받는 쪽이 없습니다(자리만) |
+| 웹서버 | 접속: `PresenceService.onlineOf(계정들)`, 바뀜 이벤트 `PresenceChangedEvent(계정, online)` | 이벤트는 연결 처리 스레드에서 바로 옴(트랜잭션 없음). 받는 쪽은 예외를 던지지 않음 |
+| 웹서버 | 게임에 알리기: `RealtimeNotifier.sendToGuild(길드 ID, 받는 사람, 메시지)` | 다른 서버에 붙은 사람에게도 감([realtime-relay](../flows/realtime-relay.md)). 메시지 종류는 realtime-api 표에 먼저 |
+| 게임 | `UWarriorGuildSubsystem`: `GetMyGuildId()`·`HasLoadedMyGuild()`·`OnMyGuildChanged(이전, 새)`(길드 ID가 바뀔 때만)·`OnMyGuildUpdated`(화면 값이 바뀔 때마다) | 로그인 직후 G4 응답 전에는 `HasLoadedMyGuild()`가 false(그동안 "길드 없음"으로 보임). 실시간 메시지는 `UWarriorRealtimeSubsystem::OnMessage`로 따로 받음 |
+
+- 서버 안 구조(표·제약·잠금 순서·동시성 결정)는 웹서버 저장소 `docs/erd/guild.md`, `docs/decisions/0003-guild-concurrency.md`. 경우별 흐름은 [flows/guild.md](../flows/guild.md).
+
 ## 정할 것
 
 | 무엇 | 지금 | 누가 |
 |---|---|---|
 | 길드장 넘기기 | 없음 | — |
 | 초대(길드장 → 사람) | 없음. 신청 표에 종류 칸을 두어 자리만 마련 | Sang-Hyun-Kim |
-| 내보내기·재가입 대기 | Lv2(10/17) | Sang-Hyun-Kim |
-| 길드원 접속 바뀜 알림(`PRESENCE_CHANGED`) | Lv2. 지금은 G4의 `online`만 | Sang-Hyun-Kim |
+| 내보내기(G10)·재가입 대기 | 보류(Lv2, 10/16 Sang 결정: 이번 M23에서는 하지 않음). 재가입 대기 설정 `pw01.guild.rejoin-cooldown=0s`와 `rejoinAvailableAt`(늘 `null`) 자리만 있음 | Sang-Hyun-Kim |
 
 ## 변경 이력
 
 | 버전 | 날짜 | 내용 |
 |---|---|---|
 | v1 | 2026-10-16 | 초안: G1~G12(G10 내보내기는 Lv2 예정), 규칙(한 사람 하나·정원 30·상한 5·스테이지 1 클리어·이름 2~12자 대소문자 가림·신청 3곳 3일), 상태·권한 표, 판정 순서, 동시에 눌렀을 때, 한 번만 반영(기억이 지나면 지금 상태로 판정), 오류 열셋 |
+| v1.1 | 2026-10-16 | 구현 반영: 길드원 접속 바뀜 `PRESENCE_CHANGED`(realtime-api v1.5)가 Lv2로 들어가 G4 `members[].online` 설명과 "정할 것"에서 뺌. G10 내보내기·재가입 대기는 "예정(10/17)" → 보류. 상태 줄에 구현 PR. 구현과 대조해 빠진 설명 보탬: G1 `name` 규칙(첫 글자만 공백 불가, 빈 값은 전부), G3 `Location` 헤더와 응답으로 바로 그림, G4를 부르는 때(로그인 직후·다시 연결), 403·404·409 뒤 G4, 오류 문구의 기준(UE `WarriorErrorText`), 새 절 "다른 기능이 길드를 쓸 때". 10/17 채팅 병합(웹서버 #34) 뒤 다시 대조: G5 `Location` 헤더, G1 빈 `cursor=`는 400, 생애 이벤트를 지금 받는 쪽(채팅은 해체만). API 모양은 그대로 |
