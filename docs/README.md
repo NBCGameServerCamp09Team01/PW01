@@ -17,6 +17,7 @@
 | [contracts/examples/](contracts/examples/) | 요청·응답 JSON 예시 | 작성 전 |
 | [flows/play-checkpoint.md](flows/play-checkpoint.md) | 진행 중 스테이지 이어하기 흐름도 | 초안 |
 | [flows/account-snapshot.md](flows/account-snapshot.md) | 계정 스냅샷 동기화 흐름도(원본·사본, 버전, 시점별 적용) | 초안 |
+| [aws-infra.md](aws-infra.md) | AWS 배포 환경 안내(팀원용): 구성·낱말·팀원에게 달라지는 것·고른 이유 | 작성 중 |
 | [flows/server-wave.md](flows/server-wave.md) | 서버 웨이브 구성 흐름도(판 시작·이어하기·못 쓸 때·미리보기·서버 정의 변경·난이도) | 초안 |
 | 일정 | 마일스톤·마감 | 자리만 (추후 추가) |
 
