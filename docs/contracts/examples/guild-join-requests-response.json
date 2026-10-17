@@ -1,0 +1,19 @@
+{
+  "data": {
+    "joinRequests": [
+      {
+        "joinRequestId": "101", "guildId": "7", "guildName": "새벽기사단",
+        "accountId": "71", "nickname": "도적",
+        "requestedAt": "2026-10-16T08:40:00.000Z", "expiresAt": "2026-10-19T08:40:00.000Z"
+      },
+      {
+        "joinRequestId": "105", "guildId": "7", "guildName": "새벽기사단",
+        "accountId": "88", "nickname": "초보",
+        "requestedAt": "2026-10-16T09:00:00.000Z", "expiresAt": "2026-10-19T09:00:00.000Z"
+      }
+    ]
+  },
+  "meta": {
+    "requestId": "0b6f3c1e-8a2d-4c6e-9f10-2a7b5d9e1c34"
+  }
+}

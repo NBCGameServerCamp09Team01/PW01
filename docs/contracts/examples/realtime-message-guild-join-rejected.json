@@ -1,0 +1,10 @@
+{
+  "type": "GUILD_JOIN_REJECTED",
+  "id": "9a0b1c2d-3e4f-4a5b-8c6d-7e8f9a0b1c2d",
+  "sentAt": "2026-10-16T09:05:00.300Z",
+  "data": {
+    "guildId": "7",
+    "guildName": "새벽기사단",
+    "joinRequestId": "105"
+  }
+}

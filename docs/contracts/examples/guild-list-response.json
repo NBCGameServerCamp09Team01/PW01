@@ -1,0 +1,19 @@
+{
+  "data": {
+    "guilds": [
+      {
+        "guildId": "9", "name": "Knight Order", "leaderAccountId": "31", "leaderNickname": "창기사",
+        "memberCount": 30, "maxMembers": 30, "createdAt": "2026-10-16T08:12:00.000Z"
+      },
+      {
+        "guildId": "7", "name": "새벽기사단", "leaderAccountId": "12", "leaderNickname": "용사",
+        "memberCount": 3, "maxMembers": 30, "createdAt": "2026-10-16T06:00:00.123Z"
+      }
+    ],
+    "hasNext": false,
+    "nextCursor": null
+  },
+  "meta": {
+    "requestId": "0b6f3c1e-8a2d-4c6e-9f10-2a7b5d9e1c34"
+  }
+}
