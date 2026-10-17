@@ -1,6 +1,6 @@
 # 결과 API (Result API)
 
-> 버전: v1.2 · 상태: 초안 · 호출: 게임 클라이언트(UE) → 웹서버 · 게임 담당: Robbie · 웹서버 담당: Robbie (리뷰: Sang-Hyun-Kim)
+> 버전: v1.3 · 상태: 초안 · 호출: 게임 클라이언트(UE) → 웹서버 · 게임 담당: Robbie · 웹서버 담당: Robbie (리뷰: Sang-Hyun-Kim)
 
 스테이지 플레이가 끝나면(클리어·실패) 게임이 결과를 보내고, 서버가 **검사 → 보상 계산 → 저장 → 진행 반영**을 한 번에 합니다. 같은 플레이의 결과는 **한 번만** 반영합니다. 저장된 결과는 다시 받을 수 있습니다.
 
@@ -29,7 +29,7 @@
 |---|---|---|---|---|
 | `requestId` | string(UUID) | 예 | 이 결과 요청의 번호. **다시 보낼 때 같은 값**. 서버가 결과와 함께 저장합니다 | — |
 | `stageId` | string | 예 | 플레이 시작 때와 같은 스테이지 키(소문자, 64자 이하) | `StageId` |
-| `difficulty` | integer | 아니오 | 플레이 시작 때와 같은 난이도. 없으면 0. 지금은 0만 | `Difficulty` |
+| `difficulty` | integer | 아니오 | 플레이 시작 때와 같은 난이도(P1·P2 응답의 `difficulty`). 없으면 0 | `Difficulty` |
 | `cleared` | boolean | 예 | 클리어했나 | `bCleared` |
 | `reachedWave` | integer | 예 | 도달한 웨이브 | `ReachedWave` |
 | `totalWaveCount` | integer | 예 | 게임이 알고 있는 전체 웨이브 수(0 이상). **검사에 쓰지 않고** 플레이의 `waveCount`와 다르면 서버가 경고 로그만 남깁니다 | `TotalWaveCount` |
@@ -176,3 +176,4 @@ R1의 `data.result`와 R2의 `data`가 같은 모양입니다.
 | v1 | 2026-10-09 | 초안: 결과를 스테이지 플레이 밑으로(R1 `POST`·R2 `GET …/{stagePlayId}/result`, 판 시작은 [stage-play-api.md](stage-play-api.md)로). `saveStatus`(`SAVED`·`ALREADY_SAVED`), 검사 순서(플레이 상태를 보상 전에), 보상(서버 계산, 총 경험치 기준), 플레이 ID로 한 번만 반영, 오류 `STAGE_RESULT_NOT_FOUND` |
 | v1.1 | 2026-10-12 | 게임의 재전송을 README 재전송 규칙으로: 자동 재시도 → 묻기 → 디스크 보관 → 로그인 뒤 재전송(S5). "정할 것"의 보관 재전송 줄 삭제. 서버 동작·칸은 그대로 |
 | v1.2 | 2026-10-13 | M25: 응답 `account`를 게임이 적용함(확장 칸 → 동기화 시점 T2, account-api.md v1.3). `ALREADY_SAVED`의 `account`는 지금 값. 서버 동작·칸은 그대로 |
+| v1.3 | 2026-10-15 | 난이도(M9): `difficulty`를 0만 받던 제한을 없앰. 값 확인은 검사 4(플레이 시작 때와 같은가, `RESULT_MISMATCH`)로 함. 보상(경험치)은 난이도와 상관없음. 칸은 그대로 |

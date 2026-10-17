@@ -1,6 +1,6 @@
 # 플레이 체크포인트 흐름 (M22: 진행 중 스테이지 이어하기)
 
-> 상태: 초안 · 명세: [stage-play-api.md 이어하기](../contracts/stage-play-api.md#이어하기), [C1·C2 체크포인트](../contracts/stage-play-api.md#c1c2-체크포인트) · Redis: [redis-keys.md 플레이 체크포인트](../contracts/redis-keys.md#플레이-체크포인트v14) · 재전송: [README.md 재전송 규칙](../contracts/README.md#재전송-규칙)
+> 상태: 초안 · 명세: [stage-play-api.md 이어하기](../contracts/stage-play-api.md#이어하기), [C1·C2 체크포인트](../contracts/stage-play-api.md#c1c2-체크포인트) · Redis: [redis-keys.md 플레이 체크포인트](../contracts/redis-keys.md#플레이-체크포인트v14) · 재전송: [README.md 재전송 규칙](../contracts/README.md#재전송-규칙) · 웨이브 구성: [server-wave.md](server-wave.md)
 
 판 도중 게임이 꺼지거나 로그인 상태가 끝난 뒤 다시 로그인했을 때의 흐름입니다. 이어하기는 **같은 `stagePlayId`**로 합니다.
 - ①~⑤ 1차(구현됨): 체크포인트 없이 **처음(1웨이브)부터**
@@ -218,12 +218,13 @@ sequenceDiagram
     FPC->>FPC: 팝업 "처음(1웨이브)부터 다시 시작합니다"
   end
   FPC->>CP: Resume (이어하기)
-  CP->>SL: SelectStageForResume(stageId, ResumeInfo{stagePlayId, Checkpoint})
+  CP->>SL: SelectStageForResume(stageId, ResumeInfo{stagePlayId, Checkpoint, WavePlan})
   CP->>FPC: 레벨 열기
   GM->>SL: ConsumeResumeInfo (BeginRun)
+  GM->>SP: StartStagePlay(stageId, &ResumeInfo) (P1 없음, 같은 ID)
+  Note over GM,SP: P2의 waves로 웨이브 구성을 먼저 넣음(M24, server-wave.md ②)
   GM->>CPL: Restore(강화 → GAS 현재값 → 인벤토리 → 판 통계)
   GM->>GM: CurrentWaveIndex = 2 - 1, 웨이브 표시 2/5
-  GM->>SP: StartStagePlay(stageId, &ResumeInfo) (P1 없음, 같은 ID)
   Note over GM: Initializing → Resting(준비 시간 대신) → 웨이브 3
   Note over GM: 결과 playTimeSeconds = elapsedSeconds + 이어한 뒤 시간
 ```

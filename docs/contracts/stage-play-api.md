@@ -1,12 +1,12 @@
 # 스테이지 플레이 API (Stage Play API)
 
-> 버전: v1.2 · 상태: 초안 · 호출: 게임 클라이언트(UE) → 웹서버 · 게임 담당: Robbie · 웹서버 담당: Sang-Hyun-Kim (리뷰: Robbie)
+> 버전: v1.4 · 상태: 초안 · 호출: 게임 클라이언트(UE) → 웹서버 · 게임 담당: Robbie · 웹서버 담당: Sang-Hyun-Kim (리뷰: Robbie)
 
 계정이 스테이지에 들어갈 때 서버가 **스테이지 플레이 ID**를 발급하고, 그 플레이가 진행 중인지·끝났는지를 서버가 관리합니다. 결과 제출은 이 ID로 합니다([result-api.md](result-api.md)). **계정 하나는 진행 중인 플레이를 하나만** 가질 수 있습니다.
 
 - 경로·시각·성공 응답 `{data, meta}`·오류 응답·요청 번호: [README.md 공통 규칙](README.md#공통-규칙)
 - 인증(토큰, 세션 연장, 401 네 종류): [auth-api.md 인증](auth-api.md#인증). 아래 API는 모두 인증이 필요합니다
-- 스테이지 키·열림·잠김: [stage-api.md](stage-api.md)
+- 스테이지 키·열림·잠김, 웨이브·몬스터·난이도 정의 파일: [stage-api.md](stage-api.md)
 
 ## 낱말
 
@@ -16,6 +16,7 @@
 | `stagePlayId` | 스테이지 플레이 ID. UUID 소문자·하이픈 36자(예: `3f2b8c1e-7a4d-4e2f-9b10-6c5d4e3f2a1b`). 서버가 발급합니다. 경로로 받을 때는 대문자도 받고 소문자로 맞춥니다 |
 | 진행 중 | 시작했고 아직 결과·포기·만료가 없는 상태. 계정당 하나 |
 | 마감 | 결과를 낼 수 있는 마지막 시각. 시작 + 24시간 |
+| 웨이브 구성 | 그 판의 웨이브별 몬스터·수·보스·골드·쉬는 시간·적 능력치 배율. 시작 때 서버 정의와 난이도로 만들어 플레이에 고정합니다([웨이브 구성](#웨이브-구성)) |
 | 체크포인트 | 진행 중인 플레이의 판 안 값(골드·아이템·판 강화·체력·판 통계 등). 웨이브를 클리어할 때마다 게임이 올리고(덮어씀), 이어하기 때 받아 그 웨이브 다음부터 시작합니다. 판이 끝나면 지웁니다 |
 
 ## 엔드포인트
@@ -40,13 +41,34 @@
 | `stagePlayId` | string | 스테이지 플레이 ID |
 | `accountId` | string | 주인 계정 ID(숫자를 문자열로) |
 | `stageId` | string | 스테이지 키 |
-| `difficulty` | integer | 난이도. **0 = 난이도 조절 없음(기본)**. 지금은 0만 |
-| `waveCount` | integer | 시작 때의 서버 웨이브 수. 결과 검사 기준입니다(마감 사이에 서버 정의가 바뀌어도 그대로) |
+| `difficulty` | integer | 난이도 번호([stage-api.md 난이도](stage-api.md#난이도)). **0 = 난이도 조절 없음(기본)**. 시작 때 고정 |
+| `waveCount` | integer | 시작 때의 서버 웨이브 수. 결과 검사·체크포인트 범위 기준입니다(마감 사이에 서버 정의가 바뀌어도 그대로). `waves` 수와 같습니다 |
+| `waveVersion` | string \| null | 시작 때의 웨이브 정보 버전(예: `w2-m2-d1`, v1.4 전 플레이는 `w1-m1` 모양, [stage-api.md](stage-api.md#서버-정의-파일)) |
+| `waves` | array \| null | 시작 때의 웨이브 구성. 아래 표. 웨이브 번호 순 |
 | `status` | string | `IN_PROGRESS` · `CLEARED` · `FAILED` · `EXPIRED` |
 | `endReason` | string \| null | 끝난 이유. `RESULT`(결과 제출) · `ABANDONED`(포기) · `EXPIRED`(마감 지남). 진행 중이면 `null`(칸은 늘 있음) |
 | `startedAt` | string | 시작 시각 |
 | `expiresAt` | string | 마감 |
 | `endedAt` | string \| null | 끝난 시각. 진행 중이면 `null` |
+
+`waves[]` 한 개(몬스터 정의 값과 그 플레이의 난이도를 반영한 것. 게임은 몬스터·난이도 정의를 따로 받지 않습니다)
+
+| 필드 | 타입 | 설명 |
+|---|---|---|
+| `waveNumber` | integer | 웨이브 번호. 1부터 |
+| `restSeconds` | number | 이 웨이브 앞 쉬는 시간(초). 0이면 게임 기본. 1웨이브 앞은 준비 시간이라 쓰지 않음 |
+| `bossWave` | boolean | 보스 웨이브 |
+| `goldChanceMultiplier` | number | 이 웨이브의 골드 확률 배율 |
+| `goldAmountMultiplier` | number | 이 웨이브의 골드 양 배율(난이도 골드 배율을 곱한 값) |
+| `enemies` | array | 나올 적. 1줄 이상 |
+| `enemies[].monsterId` | string | 몬스터 키. 게임이 몬스터 카탈로그로 BP를 찾습니다 |
+| `enemies[].count` | integer | 마리 수(1 이상, 난이도 반영) |
+| `enemies[].boss` | boolean | 보스 몬스터 |
+| `enemies[].spawnGroup` | string \| null | 스폰 그룹 이름. 없으면 `null`(기본 스폰) |
+| `enemies[].goldReward` | integer | 한 마리 골드(웨이브 배율을 곱하기 전) |
+| `enemies[].goldDropChance` | number | 골드를 떨굴 확률(0~1, 웨이브 배율을 곱하기 전) |
+| `enemies[].healthMultiplier` | number | 적 체력 배율(난이도). 게임이 그 적의 최대·현재 체력에 곱합니다. 난이도 0은 1.0 |
+| `enemies[].damageMultiplier` | number | 적 공격력 배율(난이도). 게임이 그 적의 공격력에 곱합니다. 난이도 0은 1.0 |
 
 **상태 규칙**
 
@@ -63,19 +85,41 @@
 
 예시: `examples/stage-play-response.json`
 
+## 웨이브 구성
+
+판의 웨이브 구성은 서버 정의 파일([stage-api.md 서버 정의 파일](stage-api.md#서버-정의-파일))이 원본입니다. **시작(P1) 때 한 번 만들어 플레이에 고정**하고, 그 판은 끝까지 그 구성을 씁니다.
+
+**서버**
+
+- P1이 통과하면 그 스테이지의 웨이브를 몬스터 정의 값과 합치고(덮어쓰기 반영) **요청한 난이도의 마리 수·배율을 반영해**([stage-api.md 난이도](stage-api.md#난이도)) `waves`로 만들고, 그때의 `waveVersion`과 함께 플레이에 저장합니다. `waveCount`도 같은 정의에서 같이 저장하므로 `waves` 수와 같습니다.
+- P1(같은 `requestId` 재전송 포함)·P2·P3·P4는 모두 **저장한 구성**을 돌려줍니다. 그 사이 서버 정의가 바뀌어도(`waveVersion`이 달라도) 이미 시작한 플레이는 처음 구성입니다.
+- 구성을 저장하기 전에 시작한 플레이(v1.3 배포 전)는 응답할 때 지금 정의로 채웁니다. 지금 정의의 웨이브 수가 그 플레이의 `waveCount`와 다르면 `waves`·`waveVersion`을 `null`로 둡니다. 이런 플레이는 모두 난이도 0입니다.
+- v1.4 전에 저장한 구성에는 `healthMultiplier`·`damageMultiplier`가 없습니다. 응답할 때 1.0으로 채웁니다.
+- P5(모든 계정 목록)에는 싣지 않습니다.
+
+**게임**
+
+- 웨이브는 받은 `waves`로만 만듭니다. 몬스터 키는 게임의 몬스터 카탈로그로 BP를 찾습니다. 난이도로 마리 수·배율을 다시 계산하지 않습니다.
+- 적을 만들 때 그 줄의 `healthMultiplier`·`damageMultiplier`를 곱합니다(칸이 없으면 1.0). 결과·화면의 난이도는 응답의 `difficulty`를 씁니다.
+- 보통 시작은 P1 201 응답, 이어하기는 로그인 때 받은 P2 200 응답의 `waves`를 씁니다([이어하기](#이어하기)). 이어하기는 시작 요청을 보내지 않으므로 구성을 다시 받지 않습니다.
+- **판을 시작하지 않는 경우**(안내 후 메인메뉴): P1 실패, 준비 시간이 끝난 뒤에도 정해진 시간 안에 응답이 없음, `waves`가 `null`이거나 없음, 카탈로그에 없는 `monsterId`가 있음. 서버 플레이가 없는 개발 시험에서만 UE 웨이브 DataAsset으로 대신합니다.
+  - 안내는 게임의 오류 문구 표로 합니다. 서버 코드는 그대로, 게임에서 생기는 경우는 게임 안 코드 `STAGE_WAVE_PLAN_TIMEOUT`(응답 없음)·`STAGE_WAVE_PLAN_MISSING`(`waves` 없음)·`STAGE_WAVE_MONSTER_UNKNOWN`(모르는 몬스터)을 씁니다. 서버는 이 코드를 보내지 않습니다.
+  - 판 시작 실패는 코드와 관계없이 메인메뉴로 갑니다(이 레벨에서 다시 시도할 플레이가 없음).
+- 체크포인트(C1 `state`)에는 구성을 넣지 않습니다. 구성은 플레이에, 어디까지 깼는지는 체크포인트에 있고 둘 다 같은 `stagePlayId`에 묶입니다. `waveVersion`(구성 값)과 `contentVersion`(판 안 값 모양)은 따로입니다.
+
 ## P1. 시작 — `POST /accounts/me/stage-plays`
 
 | 요청 필드 | 타입 | 필수 | 설명 |
 |---|---|---|---|
 | `requestId` | string(UUID) | 예 | 다시 보낼 때 **같은 값**. 같은 값이면 처음 플레이를 그대로 돌려줍니다 |
 | `stageId` | string | 예 | 고른 스테이지 키(1~64자) |
-| `difficulty` | integer | 아니오 | 없으면 0(조절 없음). 지금은 0만 받습니다 |
+| `difficulty` | integer | 아니오 | 없으면 0(조절 없음). `difficulties.json`에 있는 번호만([stage-api.md 난이도](stage-api.md#난이도)). 없는 번호는 400 `VALIDATION_FAILED`(`errors`에 `difficulty`) |
 
 처리 순서
-1. 같은 `requestId`로 시작한 플레이가 있으면 → 그 플레이(201). 단 `stageId`가 다르면 409 `IDEMPOTENCY_KEY_REUSED`
+1. 같은 `requestId`로 시작한 플레이가 있으면 → 그 플레이(201). 단 `stageId`나 `difficulty`가 다르면 409 `IDEMPOTENCY_KEY_REUSED`
 2. 진행 중 플레이가 있으면 → 마감이 지났으면 `EXPIRED`로 바꾸고 계속, 아니면 409 `STAGE_PLAY_IN_PROGRESS`
 3. 스테이지 확인 → 없으면 404 `STAGE_NOT_FOUND`, 잠겼으면 403 `STAGE_LOCKED`([stage-api.md](stage-api.md))
-4. 발급: ID, 스테이지, 그때의 웨이브 수, 난이도, 마감. 응답 헤더 `Location: /accounts/me/stage-plays/{stagePlayId}`
+4. 발급: ID, 스테이지, 난이도, 그때의 웨이브 수·웨이브 구성(그 난이도 반영)·`waveVersion`([웨이브 구성](#웨이브-구성)), 마감. 응답 헤더 `Location: /accounts/me/stage-plays/{stagePlayId}`
 
 - 같은 계정이 동시에 두 번 시작해도 진행 중 플레이는 하나만 생깁니다.
 - 409 `STAGE_PLAY_IN_PROGRESS`를 받으면 게임은 P2로 진행 중 플레이를 받습니다. 그 플레이의 **보관 결과가 있으면 포기하지 말고 결과부터** 보냅니다. 없으면 P4로 포기한 뒤 다시 P1을 부릅니다. 진행 중 플레이는 로그인 때 [이어하기](#이어하기)에서 이미 묻기 때문에, 이 409는 그 확인이 실패했거나 그 사이 다른 기기에서 새 판을 시작한 경우에만 생깁니다.
@@ -150,7 +194,7 @@
 | 요청 필드 | 타입 | 필수 | 설명 |
 |---|---|---|---|
 | `contentVersion` | integer | 예 | 판 안 값 모양의 버전(1 이상). 게임이 정합니다. 이어하기 때 게임의 지금 버전과 다르면 게임은 체크포인트를 쓰지 않고 처음부터 합니다 |
-| `clearedWave` | integer | 예 | 방금 클리어한 웨이브 번호. **1 이상, 플레이의 `waveCount` 미만**(마지막 웨이브를 클리어하면 체크포인트 대신 결과를 냅니다) |
+| `clearedWave` | integer | 예 | 방금 클리어한 웨이브 번호. **1 이상, 플레이의 `waveCount`(= `waves` 수) 미만**(마지막 웨이브를 클리어하면 체크포인트 대신 결과를 냅니다). 이어하면 `waves[clearedWave]`(웨이브 번호 `clearedWave` + 1)부터입니다 |
 | `elapsedSeconds` | number | 예 | 그때까지의 플레이 시간(초, 0 이상). 이어한 판의 결과 `playTimeSeconds` = 이 값 + 이어한 뒤 시간 |
 | `state` | object | 예 | 판 안 값. 직렬화한 크기가 설정 값(`pw01.play-checkpoint.max-state-size`, 처음 64KB) 이하 |
 
@@ -225,7 +269,7 @@
 3. P2
    - 204: 메인메뉴
    - 200이고 그 플레이의 보관 결과가 아직 디스크에 있음(재전송이 재시도 가능한 실패로 남음): 묻지 않고 메인메뉴. 결과가 먼저입니다
-   - 200: 4로
+   - 200: 4로. 응답의 `difficulty`·`waves`·`waveVersion`(시작 때 고정)을 이어하기에 씁니다
    - 실패(연결 실패·5xx): 묻지 않고 메인메뉴. 다음 시작의 409 처리(P1)가 정리합니다
 4. C2
    - 200이고 `contentVersion`이 게임의 지금 버전과 같음: **체크포인트에서 이어하기**
@@ -234,17 +278,19 @@
    - 스테이지 이름, 남은 시간(`expiresAt` − 지금)
    - 체크포인트에서: "〔`clearedWave` + 1〕웨이브부터 이어서 합니다" + 골드·체력 요약(`state`에서)
    - 처음부터: "처음(1웨이브)부터 다시 시작합니다"
+   - 이 빌드에서 열 수 없는 플레이(스테이지가 이 빌드의 목록에 없음, `waves`가 `null`, 카탈로그에 없는 `monsterId`가 있음)는 [포기]만 보입니다. 이어하기를 눌러 판 시작 단계에서 실패하면 플레이가 진행 중으로 남아 로그인마다 같은 실패를 되풀이하기 때문입니다
 
 **선택별 처리**
 
 | 선택 | 게임 | 서버 |
 |---|---|---|
-| 이어하기(체크포인트에서) | **P1을 부르지 않고** 같은 `stagePlayId`로 그 스테이지를 엽니다. `state`의 판 안 값을 넣고 **`clearedWave` + 1 웨이브 앞 쉬는 시간부터** 시작합니다. 이어서 클리어하는 웨이브마다 C1을 계속 올립니다 | 바뀌는 것 없음 |
-| 이어하기(처음부터) | **P1을 부르지 않고** 같은 `stagePlayId`로 **처음(1웨이브)부터** 다시 합니다. 판 안 값은 처음 값입니다 | 바뀌는 것 없음 |
+| 이어하기(체크포인트에서) | **P1을 부르지 않고** 같은 `stagePlayId`로 그 스테이지를 엽니다. P2의 `waves`로 웨이브를 먼저 만든 뒤 `state`의 판 안 값을 넣고 **`clearedWave` + 1 웨이브 앞 쉬는 시간부터** 시작합니다. 이어서 클리어하는 웨이브마다 C1을 계속 올립니다 | 바뀌는 것 없음 |
+| 이어하기(처음부터) | **P1을 부르지 않고** 같은 `stagePlayId`로 P2의 `waves`를 써서 **처음(1웨이브)부터** 다시 합니다. 판 안 값은 처음 값입니다 | 바뀌는 것 없음 |
 | 포기 | P4 → 메인메뉴. 200·404·409는 메인메뉴, 연결 실패·5xx는 안내 후 메인메뉴(다음 로그인 때 다시 묻습니다) | `FAILED` + `ABANDONED`, 체크포인트 지움 |
 
 **규칙**
 
+- 이어한 판도 **시작 때의 웨이브 구성과 난이도**로 합니다. 그 사이 서버 정의가 바뀌어도 같은 적·같은 배율입니다([웨이브 구성](#웨이브-구성)). 결과의 `difficulty`도 그 플레이의 값입니다.
 - 결과는 **같은 `stagePlayId`**로 냅니다. 결과 검사의 경과 시간과 마감은 원래 `startedAt`·`expiresAt` 기준이고, 이어한 판의 플레이 시간은 늘 그보다 짧으므로 검사를 통과합니다.
 - 이어한 판의 `playTimeSeconds`: 체크포인트에서 이었으면 `elapsedSeconds` + 이어한 뒤 시간, 처음부터면 다시 한 판의 시간. 랭킹도 이 값으로 매깁니다.
 - 이어한 판의 `reachedWave`·통계는 실제로 도달한 웨이브와 판 전체 값입니다(체크포인트에서 이었으면 `state.stageRecord`부터 이어서 셈).
@@ -275,3 +321,5 @@
 | v1 | 2026-10-09 | 초안: 판 시작(`POST /runs`)을 계정 밑 스테이지 플레이로 바꿈. P1 시작, P2 내 진행 중, P3 하나 조회, P4 포기, P5 모든 계정 진행 중 목록, 상태 4개와 `endReason`, 계정당 진행 중 하나, 오류 다섯 개 |
 | v1.1 | 2026-10-13 | 이어하기(1차) 절: 로그인 뒤 재전송 → P2 → 이어하기(같은 `stagePlayId`, 처음부터)/포기(P4). P1 409·P2 "쓰는 곳" 설명 고침. P2·P4 예시 추가. 서버 동작·칸은 그대로 |
 | v1.2 | 2026-10-13 | 체크포인트 C1 저장(`PUT`, 덮어씀, `clearedWave` 범위·순서 검사, `state`는 게임이 정하는 JSON 객체)·C2 받기(`GET`, 없으면 204). 판이 끝나면(R1·P4·만료) 체크포인트 지움. 오류 `CHECKPOINT_OUT_OF_ORDER`. "이어하기" 절: P2 → C2 → 체크포인트에서(다음 웨이브 쉬는 시간부터)/처음부터, 이어한 판의 `playTimeSeconds` = `elapsedSeconds` + 이어한 뒤 |
+| v1.3 | 2026-10-14 | 웨이브 구성(M24): P1~P4 응답에 `waveVersion`·`waves` 추가(시작 때 서버 정의에서 만들어 플레이에 고정, 재전송·P2·P3·P4 모두 같은 구성, 저장 전 플레이는 지금 정의로 채움). "웨이브 구성" 절(서버·게임, 판을 시작하지 않는 경우와 게임 안 코드). C1 `clearedWave` 범위가 `waves` 수와 같음. "이어하기" 절: P2의 `waves` 사용, 이 빌드에서 열 수 없으면 [포기]만. 응답 칸 추가라 호환 |
+| v1.4 | 2026-10-15 | 난이도(M9): P1 `difficulty`는 `difficulties.json`에 있는 번호만(없으면 400 `VALIDATION_FAILED`), 같은 `requestId`에 다른 `difficulty`는 409 `IDEMPOTENCY_KEY_REUSED`. 시작 때 그 난이도의 마리 수·배율을 반영한 구성을 고정. `waves[].enemies[]`에 `healthMultiplier`·`damageMultiplier` 추가(저장 전 구성은 1.0), `waveVersion` 예 `w2-m2-d1`. 이어하기는 P2의 `difficulty` 사용. 응답 칸 추가라 호환 |

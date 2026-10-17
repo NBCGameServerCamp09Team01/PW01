@@ -11,12 +11,14 @@
 | [contracts/stat-api.md](contracts/stat-api.md) | 스탯 투자 API(묶음 올림·내림) | 구현됨 v1 |
 | [contracts/skill-api.md](contracts/skill-api.md) | 스킬 해금 API(해금, 서버 진행도) | 초안 v1 |
 | [contracts/redis-keys.md](contracts/redis-keys.md) | Redis 키 규칙 | 작성 전 |
-| [contracts/ranking-api.md](contracts/ranking-api.md) | 랭킹 API(스테이지·지역 총합·전체 총합·진행 순위, 전체·주간) | 초안 v1 |
-| [contracts/stage-play-api.md](contracts/stage-play-api.md) | 스테이지 플레이 API(시작·진행 중·포기, 체크포인트, 이어하기) | 초안 v1.2 |
+| [contracts/ranking-api.md](contracts/ranking-api.md) | 랭킹 API(스테이지·지역 총합·전체 총합·진행 순위, 전체·주간, 난이도별) | 초안 v1.1 |
+| [contracts/stage-api.md](contracts/stage-api.md) | 스테이지 API(스테이지 정의·내 진행, 웨이브·몬스터·난이도 정의 파일) | 초안 v1.4 |
+| [contracts/stage-play-api.md](contracts/stage-play-api.md) | 스테이지 플레이 API(시작·진행 중·포기, 웨이브 구성·난이도, 체크포인트, 이어하기) | 초안 v1.4 |
 | [contracts/examples/](contracts/examples/) | 요청·응답 JSON 예시 | 작성 전 |
 | [flows/play-checkpoint.md](flows/play-checkpoint.md) | 진행 중 스테이지 이어하기 흐름도 | 초안 |
 | [flows/account-snapshot.md](flows/account-snapshot.md) | 계정 스냅샷 동기화 흐름도(원본·사본, 버전, 시점별 적용) | 초안 |
 | [aws-infra.md](aws-infra.md) | AWS 배포 환경 안내(팀원용): 구성·낱말·팀원에게 달라지는 것·고른 이유 | 작성 중 |
+| [flows/server-wave.md](flows/server-wave.md) | 서버 웨이브 구성 흐름도(판 시작·이어하기·못 쓸 때·미리보기·서버 정의 변경·난이도) | 초안 |
 | 일정 | 마일스톤·마감 | 자리만 (추후 추가) |
 
 ## 다른 곳에 있는 문서

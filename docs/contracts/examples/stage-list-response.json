@@ -1,6 +1,38 @@
 {
   "data": {
     "totalCount": 2,
+    "waveVersion": "w1-m1-d1",
+    "difficulties": [
+      {
+        "difficulty": 0,
+        "name": "이지"
+      },
+      {
+        "difficulty": 1,
+        "name": "노말"
+      },
+      {
+        "difficulty": 2,
+        "name": "하드"
+      }
+    ],
+    "monsters": [
+      {
+        "monsterId": "monster.samurai",
+        "name": "사무라이",
+        "boss": false
+      },
+      {
+        "monsterId": "monster.archer",
+        "name": "궁수",
+        "boss": false
+      },
+      {
+        "monsterId": "monster.boss.warrior",
+        "name": "무사 보스",
+        "boss": true
+      }
+    ],
     "regions": [
       {
         "regionId": "region.01",
@@ -13,7 +45,152 @@
             "order": 1,
             "requires": null,
             "waveCount": 5,
-            "recommendedClearSeconds": 300
+            "recommendedClearSeconds": 300,
+            "multipliers": [
+              {
+                "difficulty": 0,
+                "enemyCountMultiplier": 1.0,
+                "enemyHealthMultiplier": 1.0,
+                "enemyDamageMultiplier": 1.0,
+                "goldAmountMultiplier": 1.0
+              },
+              {
+                "difficulty": 1,
+                "enemyCountMultiplier": 1.0,
+                "enemyHealthMultiplier": 1.2,
+                "enemyDamageMultiplier": 1.2,
+                "goldAmountMultiplier": 1.0
+              },
+              {
+                "difficulty": 2,
+                "enemyCountMultiplier": 1.0,
+                "enemyHealthMultiplier": 1.5,
+                "enemyDamageMultiplier": 1.3,
+                "goldAmountMultiplier": 1.0
+              }
+            ],
+            "waves": [
+              {
+                "waveNumber": 1,
+                "bossWave": false,
+                "enemies": [
+                  {
+                    "monsterId": "monster.samurai",
+                    "count": 2,
+                    "counts": [
+                      2,
+                      2,
+                      2
+                    ],
+                    "boss": false
+                  }
+                ]
+              },
+              {
+                "waveNumber": 2,
+                "bossWave": false,
+                "enemies": [
+                  {
+                    "monsterId": "monster.samurai",
+                    "count": 3,
+                    "counts": [
+                      3,
+                      3,
+                      3
+                    ],
+                    "boss": false
+                  }
+                ]
+              },
+              {
+                "waveNumber": 3,
+                "bossWave": false,
+                "enemies": [
+                  {
+                    "monsterId": "monster.samurai",
+                    "count": 3,
+                    "counts": [
+                      3,
+                      3,
+                      3
+                    ],
+                    "boss": false
+                  },
+                  {
+                    "monsterId": "monster.archer",
+                    "count": 1,
+                    "counts": [
+                      1,
+                      1,
+                      1
+                    ],
+                    "boss": false
+                  }
+                ]
+              },
+              {
+                "waveNumber": 4,
+                "bossWave": false,
+                "enemies": [
+                  {
+                    "monsterId": "monster.samurai",
+                    "count": 5,
+                    "counts": [
+                      5,
+                      5,
+                      5
+                    ],
+                    "boss": false
+                  },
+                  {
+                    "monsterId": "monster.archer",
+                    "count": 2,
+                    "counts": [
+                      2,
+                      2,
+                      2
+                    ],
+                    "boss": false
+                  }
+                ]
+              },
+              {
+                "waveNumber": 5,
+                "bossWave": true,
+                "enemies": [
+                  {
+                    "monsterId": "monster.boss.warrior",
+                    "count": 1,
+                    "counts": [
+                      1,
+                      1,
+                      1
+                    ],
+                    "boss": true
+                  },
+                  {
+                    "monsterId": "monster.samurai",
+                    "count": 2,
+                    "counts": [
+                      2,
+                      2,
+                      2
+                    ],
+                    "boss": false
+                  },
+                  {
+                    "monsterId": "monster.archer",
+                    "count": 1,
+                    "counts": [
+                      1,
+                      1,
+                      1
+                    ],
+                    "boss": false
+                  }
+                ]
+              }
+            ]
           },
           {
             "stageId": "stage.01.02",
@@ -21,7 +198,152 @@
             "order": 2,
             "requires": "stage.01.01",
             "waveCount": 5,
-            "recommendedClearSeconds": 300
+            "recommendedClearSeconds": 300,
+            "multipliers": [
+              {
+                "difficulty": 0,
+                "enemyCountMultiplier": 1.0,
+                "enemyHealthMultiplier": 1.0,
+                "enemyDamageMultiplier": 1.0,
+                "goldAmountMultiplier": 1.0
+              },
+              {
+                "difficulty": 1,
+                "enemyCountMultiplier": 1.0,
+                "enemyHealthMultiplier": 1.2,
+                "enemyDamageMultiplier": 1.2,
+                "goldAmountMultiplier": 1.0
+              },
+              {
+                "difficulty": 2,
+                "enemyCountMultiplier": 1.0,
+                "enemyHealthMultiplier": 1.5,
+                "enemyDamageMultiplier": 1.3,
+                "goldAmountMultiplier": 1.0
+              }
+            ],
+            "waves": [
+              {
+                "waveNumber": 1,
+                "bossWave": false,
+                "enemies": [
+                  {
+                    "monsterId": "monster.samurai",
+                    "count": 3,
+                    "counts": [
+                      3,
+                      3,
+                      3
+                    ],
+                    "boss": false
+                  }
+                ]
+              },
+              {
+                "waveNumber": 2,
+                "bossWave": false,
+                "enemies": [
+                  {
+                    "monsterId": "monster.samurai",
+                    "count": 4,
+                    "counts": [
+                      4,
+                      4,
+                      4
+                    ],
+                    "boss": false
+                  }
+                ]
+              },
+              {
+                "waveNumber": 3,
+                "bossWave": false,
+                "enemies": [
+                  {
+                    "monsterId": "monster.samurai",
+                    "count": 4,
+                    "counts": [
+                      4,
+                      4,
+                      4
+                    ],
+                    "boss": false
+                  },
+                  {
+                    "monsterId": "monster.archer",
+                    "count": 2,
+                    "counts": [
+                      2,
+                      2,
+                      2
+                    ],
+                    "boss": false
+                  }
+                ]
+              },
+              {
+                "waveNumber": 4,
+                "bossWave": false,
+                "enemies": [
+                  {
+                    "monsterId": "monster.samurai",
+                    "count": 6,
+                    "counts": [
+                      6,
+                      6,
+                      6
+                    ],
+                    "boss": false
+                  },
+                  {
+                    "monsterId": "monster.archer",
+                    "count": 3,
+                    "counts": [
+                      3,
+                      3,
+                      3
+                    ],
+                    "boss": false
+                  }
+                ]
+              },
+              {
+                "waveNumber": 5,
+                "bossWave": true,
+                "enemies": [
+                  {
+                    "monsterId": "monster.boss.warrior",
+                    "count": 1,
+                    "counts": [
+                      1,
+                      1,
+                      1
+                    ],
+                    "boss": true
+                  },
+                  {
+                    "monsterId": "monster.samurai",
+                    "count": 3,
+                    "counts": [
+                      3,
+                      3,
+                      3
+                    ],
+                    "boss": false
+                  },
+                  {
+                    "monsterId": "monster.archer",
+                    "count": 2,
+                    "counts": [
+                      2,
+                      2,
+                      2
+                    ],
+                    "boss": false
+                  }
+                ]
+              }
+            ]
           }
         ]
       }

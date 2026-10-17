@@ -11,6 +11,8 @@
 | `local`·`test` | `:8080` | `:8080/actuator/*` | 줄 로그 `%5p [requestId]` |
 | `prod` | `:8080` | **`:8081/actuator/*`만**(관리 포트 `MANAGEMENT_PORT`, 밖에 열지 않음). `:8080/actuator/*`는 404 | 한 줄 JSON(ECS), `requestId` 칸 |
 
+- 게임(타이틀 확인)과 밖에서 보는 상태 확인은 게임 API 포트의 **`GET /health`**입니다(두 프로필 모두 `:8080/health`, 배포는 로드 밸런서 주소`/health`). DB·Redis 상태로 200 `{"status":"UP"}` / 503 `{"status":"DOWN"}`만 돌려주고 하위 상태는 보이지 않습니다([명세 README 재전송 규칙](../contracts/README.md#재전송-규칙) "서버 상태 확인"). 하위 상태가 필요하면 아래 Actuator `health`를 봅니다.
+
 ## 참여자
 
 | 이름 | 저장소·위치 | 하는 일 |
