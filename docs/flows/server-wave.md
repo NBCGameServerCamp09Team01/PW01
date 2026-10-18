@@ -206,7 +206,7 @@ sequenceDiagram
   Note over RL1: [Content] 정의 교체 w3-m2-d1 → w4-m2-d1 reason=signal
   RL1-->>EP1: CHANGED
   EP1->>PUB: publishContentChanged() → 전체 채널 kind CONTENT_CHANGED
-  PUB-->>RL2: RealtimeRelayListener → ServerContentChangedEvent (새) → reload("relay")
+  PUB-->>RL2: RealtimeRelayListener → ServerContentChangedEvent (새) → 전용 스레드에서 reload("relay")
   RL2->>S3: HEAD → GetObject → 검사 → replace
   EP1-->>OP: 200 {result CHANGED, waveVersion w4-m2-d1}
   G->>RL2: (서버 B로 간) 새 P1
