@@ -131,7 +131,7 @@ sequenceDiagram
 
 - 관리 포트는 밖에 열지 않습니다(보안 그룹). Session Manager로 서버 하나에 들어가 `curl`로 부릅니다. 다른 서버는 Redis 서버 사이 전달(kind `CONTENT_CHANGED`)로 따라오고, 놓치면 5분 안에 스스로 확인합니다.
 - 응답은 Actuator 모양(`{data, meta}`로 감싸지 않음)이고 결과와 상관없이 200입니다. 결과는 `result` 칸으로 가립니다.
-- `local`·`test`는 이미지 안 파일을 쓰므로 다시 읽기를 하지 않습니다(`result` `NOT_S3`).
+- `local`·`test`는 이미지 안 파일을 쓰므로 다시 읽기를 하지 않습니다(`result` `NOT_S3`). 로컬에서 파일 출처를 켜면(웹서버 README) S3와 같은 결과 넷이 나오고 `source`가 `file:…`입니다. 관리 포트가 따로 없어 `:8080`(로컬 두 앱이면 `:8081`·`:8082`)으로 부릅니다.
 
 **`GET` 응답**
 
