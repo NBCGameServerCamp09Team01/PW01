@@ -4,7 +4,7 @@
 
 로드 밸런서는 HTTP 요청을 요청마다 아무 서버로 보내고, WebSocket은 처음 붙은 서버에 계속 붙여 둡니다. 그래서 "알림을 보내는 HTTP를 받은 서버"와 "받는 사람의 WebSocket이 붙은 서버"가 다를 수 있습니다. 서버들은 Redis Pub/Sub 채널로 메시지를 서로 넘기고, 각 서버는 **자기에게 붙은 사람에게만** 보냅니다.
 
-- ① 같은 서버 · ② 다른 서버(길드 채널) · ③ 전체(전체 채널) · ④ 다른 곳 로그인(세션 다시 확인) · ⑤ Redis가 잠깐 끊김
+- ① 같은 서버 · ② 다른 서버(길드 채널) · ③ 전체(전체 채널) · ④ 다른 곳 로그인(세션 다시 확인) · ⑤ Redis가 잠깐 끊김 · ⑥ 서버끼리 알림: 웨이브 정의 바뀜(`CONTENT_CHANGED`, 게임에 안 감)
 
 ## 참여자
 
@@ -19,6 +19,7 @@
 | `RealtimeRelayConfig` | 웹서버 `config` | 구독 컨테이너: 전체·지정 채널 + 길드 패턴 `pw01:realtime-relay:guild:*`, 받기 스레드 하나 |
 | `RealtimeHeartbeat` | 웹서버 `realtime/service` | Pong 연장과 "세션 다시 확인"이 같이 쓰는 판정 `revalidate` |
 | `RealtimeSessionListener` | 웹서버 `realtime/service` | 로그인 이벤트 → 이 서버 연결에 4001 + 다른 서버에 세션 다시 확인 |
+| `StageContentEndpoint`·`StageContentReloader` (새, 판 12) | 웹서버 `stage/` | 관리 포트 신호로 웨이브 정의를 다시 읽고, 바뀌었으면 `RealtimeNotifier.notifyContentChanged()`로 `CONTENT_CHANGED`를 올림. 받은 쪽은 `RealtimeEventPublisher`가 `ServerContentChangedEvent`를 내고 `StageContentChangeListener`가 다시 읽기를 **전용 스레드**(`StageContentSafetyPoll`)에 맡김 |
 | Redis 채널 | `pw01:realtime-relay:global` / `:guild:<길드 ID>` / `:target` | 서버 사이 전달(키 아님, 저장 안 함) |
 | `UWarriorRealtimeSubsystem` | 게임 `Network/` | WebSocket 메시지 받기(모르는 종류는 무시) |
 
@@ -145,11 +146,41 @@ sequenceDiagram
 
 - 놓칠 수 있다는 것은 명세의 원칙입니다. 길드 채팅은 내역으로 채우고, 전체 채팅은 지금은 잃은 채로 둡니다.
 
+## ⑥ 서버끼리 알림: 웨이브 정의 바뀜(판 12)
+
+게임에 보내는 메시지가 아니라 **서버끼리** 쓰는 kind입니다([redis-keys.md](../contracts/redis-keys.md#실시간-서버-사이-전달v15) v1.9). 운영자가 S3 웨이브 정의를 바꾸고 서버 A의 관리 포트에 다시 읽기를 보내면, A가 바꾼 뒤 다른 서버에 알립니다. 정의 쪽 경우별 흐름은 [server-wave.md ⑥](server-wave.md)에 있습니다.
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant OP as 운영(Session Manager)
+  participant A as 웹서버 A StageContentEndpoint (새)
+  participant PUB as RealtimeRelayPublisher
+  participant R as Redis 전체 채널
+  participant L as 웹서버 B RealtimeRelayListener
+  participant BG as 웹서버 B StageContentSafetyPoll 스레드 (새)
+  participant RL as 웹서버 B StageContentReloader (새)
+
+  OP->>A: POST localhost:8081/actuator/stagecontent
+  A->>A: 다시 읽기 → CHANGED
+  A->>PUB: RealtimeNotifier.notifyContentChanged() → publishContentChanged()
+  PUB->>R: PUBLISH {"v":1,"kind":"CONTENT_CHANGED","origin":"<A>"}
+  R-->>A: (A 자신도 받음) origin이 자기 → 버림
+  R-->>L: 받음
+  L->>BG: ServerContentChangedEvent (새) → StageContentChangeListener → reloadSoon("relay")
+  Note over L: 받기 스레드는 여기서 바로 돌아감(S3 읽기로 채팅 전달이 밀리지 않게)
+  BG->>RL: reload("relay")
+  RL->>RL: S3 HEAD → 바뀜 → GET → 검사 → 교체
+```
+
+- 이 kind를 모르는 옛 서버(배포 중 섞여 돌 때)는 `[Relay] dropped: unknown kind=CONTENT_CHANGED …`로 버리고, 5분 주기 확인으로 따라옵니다. Redis가 끊긴 동안 놓친 알림도 같은 주기 확인이 메웁니다.
+- 게임 연결(`RealtimeLocalDelivery`)로는 보내지 않습니다. 받기 로그는 `[Relay] content changed origin=…`입니다.
+
 ## 로그로 확인하기
 
 | 무엇 | 로그(웹서버) |
 |---|---|
-| 서버 번호 | 뜰 때 `[Relay] serverId=<8자> host=<호스트>` |
+| 서버 번호 | 뜰 때 `[Relay] serverId=<8자> host=<호스트>`. 모든 HTTP 응답 헤더 `X-Server-Id`와 같은 값 |
 | 구독 | `[Relay] subscribed channel=…` / `pattern=pw01:realtime-relay:guild:*` |
 | 이 서버에서 보냄 | `[Realtime] sent type=… id=… RealtimeConnection[accountId=…]` |
 | 버림 | `[Relay] dropped: …`(이유), `[Realtime] not sent: …`(한도) |

@@ -1,6 +1,6 @@
 # Redis 키 규칙
 
-> 버전: v1.8 · 상태: 합의(v1.3 랭킹 절·v1.4 체크포인트 절·v1.5 서버 사이 전달 절·v1.6 채팅 절·v1.7~v1.8 접속 상태·길드 절은 초안, PR 리뷰 전) · 사용: PW01WebServer · 담당: Sang-Hyun-Kim · 리뷰: Robbie
+> 버전: v1.9 · 상태: 합의(v1.3 랭킹 절·v1.4 체크포인트 절·v1.5 서버 사이 전달 절·v1.6 채팅 절·v1.7~v1.8 접속 상태·길드 절·v1.9 서버끼리 알림 `CONTENT_CHANGED`는 초안, PR 리뷰 전) · 사용: PW01WebServer · 담당: Sang-Hyun-Kim · 리뷰: Robbie
 
 웹서버가 Redis에 쓰는 키의 이름·타입·만료 규칙입니다. 새 키를 쓰기 전에 여기에 먼저 추가합니다.
 
@@ -509,7 +509,7 @@ return 1
 
 | 채널 | 실리는 것 | 서버가 듣는 법 | 받은 서버가 하는 일 |
 |---|---|---|---|
-| `pw01:realtime-relay:global` | 접속한 모두에게 갈 메시지(전체 채팅) | `SUBSCRIBE` | 자기 연결 모두에게 보냄 |
+| `pw01:realtime-relay:global` | 접속한 모두에게 갈 메시지(전체 채팅), 서버끼리의 알림(`CONTENT_CHANGED`, v1.9) | `SUBSCRIBE` | `DELIVER`면 자기 연결 모두에게 보냄, `CONTENT_CHANGED`면 웨이브 정의를 다시 읽음(게임에 보내지 않음) |
 | `pw01:realtime-relay:guild:<길드 ID>` | **그 길드 하나**의 메시지(길드 채팅·길드 알림·길드원 접속 표시). 길드마다 채널 하나 | 패턴 하나 `PSUBSCRIBE pw01:realtime-relay:guild:*` | 메시지의 계정 목록 중 자기에게 붙은 사람에게만 |
 | `pw01:realtime-relay:target` | 계정을 지정한 메시지(한 사람·여러 사람)와 세션 다시 확인(`SESSION_CHECK`) | `SUBSCRIBE` | 목록 중 자기에게 붙은 사람에게만 |
 
@@ -532,14 +532,15 @@ return 1
 | 칸 | 값 | 설명 |
 |---|---|---|
 | `v` | `1` | 모양 판. 모르는 판은 버리고 경고 로그를 남깁니다(배포 중 옛·새 서버가 섞일 때) |
-| `kind` | `DELIVER` / `SESSION_CHECK` | 게임에 보내기 / 그 계정 연결의 세션을 Pong 때와 같은 판정으로 다시 확인(다른 곳 로그인이면 `4001`) |
+| `kind` | `DELIVER` / `SESSION_CHECK` / `CONTENT_CHANGED` | 게임에 보내기 / 그 계정 연결의 세션을 Pong 때와 같은 판정으로 다시 확인(다른 곳 로그인이면 `4001`) / 웨이브 정의(S3)가 바뀌었으니 다시 읽기(v1.9, 전체 채널, 서버끼리만) |
 | `origin` | 문자열 | 보낸 서버 번호(서버가 뜰 때 정하는 임의 값). 자기 메시지를 알아보고 로그에서 서버를 가릅니다 |
 | `guildId` | 문자열 | 길드 채널만. 채널 이름의 길드와 다르면 버립니다 |
 | `accountIds` | 문자열 배열 | 길드·지정 채널만. 받을 계정(ID는 문자열 — 공통 규칙) |
-| `message` | 실시간 메시지 그대로 | [realtime-api.md 메시지](realtime-api.md#메시지). `SESSION_CHECK`이면 없음 |
+| `message` | 실시간 메시지 그대로 | [realtime-api.md 메시지](realtime-api.md#메시지). `SESSION_CHECK`·`CONTENT_CHANGED`이면 없음 |
 
 - 받는 서버는 **모르는 칸을 무시**하고 읽습니다(새 서버가 칸을 더해도 옛 서버가 깨지지 않게). 깨진 메시지·한도 초과는 버리고 경고 로그(메시지 `id`만, `data`는 찍지 않음).
 - 한도: 메시지 8KB, 계정 목록 500개(설정 `pw01.realtime.relay.max-message-bytes`·`max-targets`).
+- **`CONTENT_CHANGED`(v1.9)**: 한 서버가 관리 포트 신호로 웨이브 정의를 바꾼 뒤 보냅니다(`{"v":1,"kind":"CONTENT_CHANGED","origin":"a1b2c3d4","guildId":null,"accountIds":null,"message":null}` — 쓰지 않는 칸은 `null`로 실림). 받은 서버는 S3를 다시 확인해 검사 → 교체합니다([stage-api.md 웨이브 구성 바꾸기](stage-api.md#웨이브-구성-바꾸기재시작-없이), 흐름 [server-wave.md ⑥](../flows/server-wave.md)). 게임에는 가지 않습니다. 이 kind를 모르는 옛 서버는 버리고 5분 주기 확인으로 따라옵니다. 놓쳐도 같은 주기 확인이 메웁니다.
 
 ### 성질과 장애
 
@@ -694,3 +695,4 @@ return 0
 | v1.6 | 2026-10-16 | 채팅 절(M23 채팅, [chat-api.md](chat-api.md) v1): 키 셋 `pw01:chat-rate`·`pw01:chat-strike`·`pw01:chat-mute`(계정마다, 전체·길드 함께), Lua `chat_rate.lua`(횟수 제한 10초 5번 + 도배 쉬기 1분 안에 제한 3번 → 60초를 한 번에), 설정 다섯, 명령 순서(중복 방지 안쪽에서 셈). Lv2 캐시 `pw01:guild-chat-recent`는 이름·용도만(초안) |
 | v1.7 | 2026-10-16 | M23 길드(채팅 v1.6 뒤로 번호를 올림): 접속 상태 절(키 `pw01:presence:<계정 ID>` = 서버 번호, TTL 150초·Pong마다 다시, 끊김은 `presence_release.lua`로 내 서버 값일 때만 지움, 같은 서버에 다른 연결이 남으면 지우지 않음, `MGET`으로 읽기, 설정 `pw01.presence.ttl` > Ping 간격), 길드 절(원본은 MySQL, 길드원 목록 캐시 안 둠과 이유, Lv2 재가입 대기 키 `pw01:guild-cooldown:<계정 ID>`). 채팅 예정 키 안내는 그대로 |
 | v1.8 | 2026-10-16 | M23 길드 Lv2 접속 표시 실시간: 접속 상태 쓰기를 `SET … EX 150 GET`으로(전 값이 없으면 접속함), `presence_release.lua`가 지웠으면 끊김 → realtime-api v1.6 `PRESENCE_CHANGED`. Redis 실패 때는 알리지 않음. 키·값·TTL·Lua는 그대로 |
+| v1.9 | 2026-10-17 | 실시간 서버 사이 전달에 서버끼리 알림 `kind` `CONTENT_CHANGED`(판 12: 웨이브 정의 S3 다시 읽기, 전체 채널, `message` 없음, 게임에 안 감, 옛 서버는 버림). 키는 늘지 않음 |
