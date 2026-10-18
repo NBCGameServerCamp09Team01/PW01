@@ -8,7 +8,7 @@
 
 | 프로필 | 게임 API | Actuator(`health`·`info`·`metrics`·`loggers`·`stagecontent`) | 로그 |
 |---|---|---|---|
-| `local`·`test` | `:8080` | `:8080/actuator/*` | 줄 로그 `%5p [requestId]` |
+| `local`·`test` | `:8080` | `:8080/actuator/*` | 줄 로그 `%5p [serverId requestId]` |
 | `prod` | `:8080` | **`:8081/actuator/*`만**(관리 포트 `MANAGEMENT_PORT`, 밖에 열지 않음). `:8080/actuator/*`는 404 | 한 줄 JSON(ECS), `requestId`·`serverId` 칸 |
 
 - 모든 응답에 헤더 `X-Server-Id`(그 요청을 받은 서버 번호, 8자)가 붙습니다. 서버가 여러 대일 때 어느 서버 로그를 볼지 정합니다([서버 번호로 로그 찾기](#서버-번호로-로그-찾기)).

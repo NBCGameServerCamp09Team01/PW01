@@ -540,7 +540,7 @@ return 1
 
 - 받는 서버는 **모르는 칸을 무시**하고 읽습니다(새 서버가 칸을 더해도 옛 서버가 깨지지 않게). 깨진 메시지·한도 초과는 버리고 경고 로그(메시지 `id`만, `data`는 찍지 않음).
 - 한도: 메시지 8KB, 계정 목록 500개(설정 `pw01.realtime.relay.max-message-bytes`·`max-targets`).
-- **`CONTENT_CHANGED`(v1.9)**: 한 서버가 관리 포트 신호로 웨이브 정의를 바꾼 뒤 보냅니다(`{"v":1,"kind":"CONTENT_CHANGED","origin":"a1b2c3d4"}`). 받은 서버는 S3를 다시 확인해 검사 → 교체합니다([stage-api.md 웨이브 구성 바꾸기](stage-api.md#웨이브-구성-바꾸기재시작-없이), 흐름 [server-wave.md ⑥](../flows/server-wave.md)). 게임에는 가지 않습니다. 이 kind를 모르는 옛 서버는 버리고 5분 주기 확인으로 따라옵니다. 놓쳐도 같은 주기 확인이 메웁니다.
+- **`CONTENT_CHANGED`(v1.9)**: 한 서버가 관리 포트 신호로 웨이브 정의를 바꾼 뒤 보냅니다(`{"v":1,"kind":"CONTENT_CHANGED","origin":"a1b2c3d4","guildId":null,"accountIds":null,"message":null}` — 쓰지 않는 칸은 `null`로 실림). 받은 서버는 S3를 다시 확인해 검사 → 교체합니다([stage-api.md 웨이브 구성 바꾸기](stage-api.md#웨이브-구성-바꾸기재시작-없이), 흐름 [server-wave.md ⑥](../flows/server-wave.md)). 게임에는 가지 않습니다. 이 kind를 모르는 옛 서버는 버리고 5분 주기 확인으로 따라옵니다. 놓쳐도 같은 주기 확인이 메웁니다.
 
 ### 성질과 장애
 
